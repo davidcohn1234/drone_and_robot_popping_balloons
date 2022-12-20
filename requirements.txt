@@ -1,0 +1,11 @@
+opencv-python
+imutils
+pytesseract
+nltk
+gdown
+torch
+pandas
+torchvision
+pyyaml
+matplotlib
+seaborn
