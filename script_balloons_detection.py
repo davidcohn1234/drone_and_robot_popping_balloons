@@ -36,7 +36,7 @@ unknown_color_info = {"name": 'unknown', "lower": (0, 0, 0), "upper": (0, 0, 0),
 
 input_file_name = 'balloons_video_ninja_room'
 #input_file_name = 'drone_with_injector_blowing_up_balloons'
-input_file_full_path = f'./input_data_balloons/{input_file_name}.mp4'
+input_file_full_path = f'./input_data/{input_file_name}.mp4'
 #vid = cv2.VideoCapture("rtsp://192.168.1.28:8901/live")  # For streaming links
 vid = cv2.VideoCapture(input_file_full_path)
 #vid = cv2.VideoCapture(0)
