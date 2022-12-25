@@ -57,7 +57,7 @@ unknown_color_info = {"name": 'unknown', "lower": (0, 0, 0), "upper": (0, 0, 0),
 model = torch.hub.load('ultralytics/yolov5', 'custom', path='./balloons_weights.pt')
 # model = torch.hub.load('/home/lab_user/Ninja-2022_new/yolov5', 'custom', path='/home/lab_user/Ninja-2022_new/challenge_2_balloons/balloons_kaggle.pt', source='local')
 #model = torch.hub.load('./', 'custom', path='./balloons_kaggle.pt', source='local')
-model.conf = 0.8
+model.conf = 0.6
 
 def count_pixels_in_color_range(colorLower, colorUpper, frame, code=cv2.COLOR_BGR2HSV):
     hsv_frame = cv2.cvtColor(frame, code)

@@ -6,7 +6,7 @@ from Tracker import Tracker
 #import yolo_ballons_detect as ybd
 import yolo_ballons_detect1 as ybd1
 from centroidtracker import CentroidTracker #from https://github.com/lev1khachatryan/Centroid-Based_Object_Tracking/tree/master/Python
-ct = CentroidTracker()
+centroid_tracker = CentroidTracker()
 import sys
 import time
 import cv2
@@ -128,14 +128,14 @@ class Robo_baloon(object):
         frame_full_path = os.path.join(self.images_folder, frame_name)
         frame = cv2.imread(frame_full_path)
         x_cent, y_cent, balloon_color, radius, xoffset, yoffset, frame_with_ballons_data = ybd1.run_script(frame, 0, self.simulated_frame_index)
-        try:
-            objects = ct.update(x_cent, y_cent, balloon_color, radius, xoffset, yoffset, self.simulated_frame_index)
-        except:
-            print('centroid failed')
+
+        objects = centroid_tracker.update(x_cent, y_cent, balloon_color, radius, xoffset, yoffset, self.simulated_frame_index)
+
+        print('centroid failed')
         data = {'objects': objects}
         data['frame'] = frame
         data['frame_id'] = self.simulated_frame_index
-        return data
+        return data, frame_with_ballons_data
 
     # read frames as soon as they are available, keeping only most recent one
     def _reader(self):
@@ -610,7 +610,7 @@ class Robo_baloon(object):
                 if self.simulated_frame_index == self.num_of_images:
                     break
                 else:
-                    temp_info = self.read_simulated_frame()
+                    temp_info, frame_with_ballons_data = self.read_simulated_frame()
             frame=temp_info["frame"]
             objects=temp_info["objects"]
             self.frame_inx=temp_info["frame_id"]
@@ -620,7 +620,7 @@ class Robo_baloon(object):
             now = datetime.now()
             now = now.strftime("%H_%M_%S_%f")
             height, width, _ = frame.shape  # get the frame config
-            current_frame = frame  # set the frame config
+            current_frame = frame_with_ballons_data  # set the frame config
             current_frame, stat_data, full_frame = self.process_frame(current_frame, frame_time,now,objects)
             # self.ninja1.move_any(self.forward_backward, self.left_right, self.yaw_speed)
             # # time.sleep(.2)
