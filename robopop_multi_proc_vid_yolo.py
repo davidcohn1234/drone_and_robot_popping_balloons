@@ -20,6 +20,7 @@ from datetime import datetime
 import csv
 import os
 import RoboNinja
+import glob
 
 
 now = datetime.now()
@@ -120,7 +121,6 @@ class Robo_baloon(object):
         t.start()
 
     def read_simulated_frame(self):
-        self.simulated_frame_index += 1
         print(f'self.simulated_frame_index = {self.simulated_frame_index}')
         if self.simulated_frame_index == 94:
             david = 5
@@ -597,13 +597,20 @@ class Robo_baloon(object):
         counter=0
         self.no_go_list=[]
         self.no_go_counter=0
+        jpg_expression = self.images_folder + '/*.jpg'
+        self.list_of_images = glob.glob(jpg_expression)
+        self.num_of_images = len(self.list_of_images)
 
         while True:
             print(frame_inx)
             if self.use_real_robot:
                 temp_info = self.read()  # get frame by frame from robo
             else:
-                temp_info = self.read_simulated_frame()
+                self.simulated_frame_index += 1
+                if self.simulated_frame_index == self.num_of_images:
+                    break
+                else:
+                    temp_info = self.read_simulated_frame()
             frame=temp_info["frame"]
             objects=temp_info["objects"]
             self.frame_inx=temp_info["frame_id"]
