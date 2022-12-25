@@ -93,16 +93,16 @@ class CentroidTracker():
 			y_offset1 = 0
 			balloon_color1 = 0
 			frame_id1 = 0
-			s_balloon1 = np.array((center_x1, center_y1, radius1, x_offset1, y_offset1, balloon_color1, frame_id1))
-			s_balloon2 = np.array((center_x1 + 100, center_y1, radius1, x_offset1, y_offset1, balloon_color1, frame_id1))
-			s_balloon3 = np.array((center_x1 + 200, center_y1, radius1, x_offset1, y_offset1, balloon_color1, frame_id1))
-			np_objectCentroids = np.array((s_balloon1, s_balloon2, s_balloon3))
+			np_objectCentroids_balloon1 = np.array((center_x1, center_y1, radius1, x_offset1, y_offset1, balloon_color1, frame_id1))
+			np_objectCentroids_balloon2 = np.array((center_x1 + 100, center_y1, radius1, x_offset1, y_offset1, balloon_color1, frame_id1))
+			np_objectCentroids_balloon3 = np.array((center_x1 + 200, center_y1, radius1, x_offset1, y_offset1, balloon_color1, frame_id1))
+			np_objectCentroids = np.array((np_objectCentroids_balloon1, np_objectCentroids_balloon2, np_objectCentroids_balloon3))
 
-			d_balloon1 = s_balloon1 + np.array((0, 0, 10, 0, 0, 0, 0))
-			d_balloon2 = s_balloon2 + np.array((0, 0, 50, 0, 0, 0, 0))
-			d_balloon3 = s_balloon3 + np.array((0, 0, 150, 0, 0, 0, 0))
+			inputCentroids_balloon1 = np_objectCentroids_balloon1 + np.array((0, 0, 10, 0, 0, 0, 0))
+			inputCentroids_balloon2 = np_objectCentroids_balloon2 + np.array((0, 0, 50, 0, 0, 0, 0))
+			inputCentroids_balloon3 = np_objectCentroids_balloon3 + np.array((0, 0, 150, 0, 0, 0, 0))
 
-			inputCentroids = np.array((d_balloon1, d_balloon3, d_balloon2))
+			inputCentroids = np.array((inputCentroids_balloon1, inputCentroids_balloon3, inputCentroids_balloon2))
 
 			D = dist.cdist(np_objectCentroids, inputCentroids)
 			#D[i, j] = np.linalg.norm(np_objectCentroids[i, :] - inputCentroids[j, :])
