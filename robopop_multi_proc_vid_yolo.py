@@ -81,7 +81,7 @@ yellowCode = cv2.COLOR_BGR2HSV
 
 class Robo_baloon(object):
     def __init__(self):
-        self.use_real_robot = True
+        self.use_real_robot = False
         self.move_robot = False
         self.yaw_speed = 0
         self.forward_backward = 0
@@ -127,7 +127,7 @@ class Robo_baloon(object):
         frame_name = "{:05d}.jpg".format(self.simulated_frame_index)
         frame_full_path = os.path.join(self.images_folder, frame_name)
         frame = cv2.imread(frame_full_path)
-        x_cent, y_cent, balloon_color, radius, xoffset, yoffset = ybd1.run_script(frame, 0, self.simulated_frame_index)
+        x_cent, y_cent, balloon_color, radius, xoffset, yoffset, frame_with_ballons_data = ybd1.run_script(frame, 0, self.simulated_frame_index)
         try:
             objects = ct.update(x_cent, y_cent, balloon_color, radius, xoffset, yoffset, self.simulated_frame_index)
         except:
@@ -142,7 +142,14 @@ class Robo_baloon(object):
         frame_id=0
         while True:
             frame = self.robo_camera.read_cv2_image(strategy="newest")  # get frame by frame from tello
-            x_balloons_centers_list,y_balloons_centers_list,balloon_colors_numbers_list,balloons_radiuses_list,x_offsets_list,y_offsets_list=ybd1.run_script(frame,0,frame_id)
+            x_balloons_centers_list,\
+                y_balloons_centers_list,\
+                balloon_colors_numbers_list,\
+                balloons_radiuses_list,\
+                x_offsets_list,\
+                y_offsets_list, \
+                frame_with_ballons_data = \
+                ybd1.run_script(frame,0,frame_id)
 
             try:
                 objects = ct.update(x_balloons_centers_list, y_balloons_centers_list, balloon_colors_numbers_list,balloons_radiuses_list,x_offsets_list,y_offsets_list,frame_id)

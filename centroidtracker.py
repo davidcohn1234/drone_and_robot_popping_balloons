@@ -73,6 +73,9 @@ class CentroidTracker():
 		# try to match the input centroids to existing object
 		# centroids
 		else:
+			if inputCentroids.shape[0] == 0: #david - I have no idea if that's correct
+				return self.objects
+
 			# grab the set of object IDs and corresponding centroids
 			objectIDs = list(self.objects.keys())
 			objectCentroids = list(self.objects.values())

@@ -106,7 +106,8 @@ def detect_balloon_data(frame, sub_image):
         # min_index = distances.argmin()
         # balloon_data = colors_ranges_info[min_index]
         balloon_max_pixel=0
-        return unknown_color_info , balloon_max_pixel
+        #return unknown_color_info , balloon_max_pixel
+        return blue_color_info, balloon_max_pixel #TODO - return it to unknown
     return balloon_data,balloon_max_pixel
 
 
@@ -360,4 +361,4 @@ def run_script(frame,move_factor=0,frame_index=0):
     # vid.release()
     # cv2.destroyAllWindows()
 
-    return x_cent,y_cent,balloons_color,radius,xoffset,yoffset
+    return x_cent,y_cent,balloons_color,radius,xoffset,yoffset, frame_with_ballons_data
