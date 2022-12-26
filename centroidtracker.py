@@ -109,6 +109,12 @@ class CentroidTracker():
 			np_objectCentroids_balloon3 = np.array((center_x1 + 200, center_y1))
 			np_objectCentroids = np.array((np_objectCentroids_balloon1, np_objectCentroids_balloon2, np_objectCentroids_balloon3))
 
+			num_of_tracked_objects = np_objectCentroids.shape[0]
+			objectIDs = []
+			for tracked_index in range(0, num_of_tracked_objects):
+				objectIDs.append(np_objectCentroids[tracked_index])
+
+
 			inputCentroids_balloon1 = np_objectCentroids_balloon1 + np.array((0, 15))
 			inputCentroids_balloon2 = np_objectCentroids_balloon2 + np.array((0, 5))
 			inputCentroids_balloon3 = np_objectCentroids_balloon3 + np.array((0, 1225))
