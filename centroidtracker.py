@@ -111,8 +111,14 @@ class CentroidTracker():
 
 			num_of_tracked_objects = np_objectCentroids.shape[0]
 			objectIDs = []
+			self.objects = OrderedDict()
+			counter = 0
 			for tracked_index in range(0, num_of_tracked_objects):
-				objectIDs.append(np_objectCentroids[tracked_index])
+				object_id = np_objectCentroids[tracked_index]
+				objectIDs.append(tracked_index)
+				self.objects[counter] = object_id
+				counter += 1
+
 
 
 			inputCentroids_balloon1 = np_objectCentroids_balloon1 + np.array((0, 15))
@@ -168,7 +174,8 @@ class CentroidTracker():
 				# set its new centroid, and reset the disappeared
 				# counter
 				objectID = objectIDs[row]
-				self.objects[objectID] = inputCentroids[col]
+				suitable_inputCentroids = inputCentroids[col, :]
+				self.objects[objectID] = suitable_inputCentroids
 				self.disappeared[objectID] = 0
 
 				# indicate that we have examined each of the row and
