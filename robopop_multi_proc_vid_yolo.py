@@ -135,7 +135,8 @@ class Robo_baloon(object):
         data = {'objects': objects}
         data['frame'] = frame
         data['frame_id'] = self.simulated_frame_index
-        return data, frame_with_ballons_data
+        data['frame_with_ballons_data'] = frame_with_ballons_data
+        return data
 
     # read frames as soon as they are available, keeping only most recent one
     def _reader(self):
@@ -152,12 +153,13 @@ class Robo_baloon(object):
                 ybd1.run_script(frame,0,frame_id)
 
             try:
-                objects = ct.update(x_balloons_centers_list, y_balloons_centers_list, balloon_colors_numbers_list,balloons_radiuses_list,x_offsets_list,y_offsets_list,frame_id)
+                objects = centroid_tracker.update(x_balloons_centers_list, y_balloons_centers_list, balloon_colors_numbers_list,balloons_radiuses_list,x_offsets_list,y_offsets_list,frame_id)
             except:
                 print('centroid failed')
             data = {'objects': objects}
             data['frame'] = frame
             data['frame_id'] = frame_id
+            data['frame_with_ballons_data'] = frame_with_ballons_data
 
             if not self.q.empty():
                 try:
@@ -597,9 +599,10 @@ class Robo_baloon(object):
         counter=0
         self.no_go_list=[]
         self.no_go_counter=0
-        jpg_expression = self.images_folder + '/*.jpg'
-        self.list_of_images = glob.glob(jpg_expression)
-        self.num_of_images = len(self.list_of_images)
+        if not self.use_real_robot:
+            jpg_expression = self.images_folder + '/*.jpg'
+            self.list_of_images = glob.glob(jpg_expression)
+            self.num_of_images = len(self.list_of_images)
 
         while True:
             print(frame_inx)
@@ -610,10 +613,11 @@ class Robo_baloon(object):
                 if self.simulated_frame_index == self.num_of_images:
                     break
                 else:
-                    temp_info, frame_with_ballons_data = self.read_simulated_frame()
+                    temp_info = self.read_simulated_frame()
             frame=temp_info["frame"]
             objects=temp_info["objects"]
             self.frame_inx=temp_info["frame_id"]
+            frame_with_ballons_data = temp_info["frame_with_ballons_data"]
 
 
             frame_time = time.time()
