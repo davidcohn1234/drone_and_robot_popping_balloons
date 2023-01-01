@@ -85,49 +85,7 @@ class CentroidTracker():
 			# goal will be to match an input centroid to an existing
 			# object centroid
 			np_objectCentroids = np.array(objectCentroids)
-
-			# center_x1 = 0
-			# center_y1 = 0
-			# radius1 = 0
-			# x_offset1 = 0
-			# y_offset1 = 0
-			# balloon_color1 = 0
-			# frame_id1 = 0
-			# np_objectCentroids_balloon1 = np.array((center_x1, center_y1, radius1, x_offset1, y_offset1, balloon_color1, frame_id1))
-			# np_objectCentroids_balloon2 = np.array((center_x1 + 100, center_y1, radius1, x_offset1, y_offset1, balloon_color1, frame_id1))
-			# np_objectCentroids_balloon3 = np.array((center_x1 + 200, center_y1, radius1, x_offset1, y_offset1, balloon_color1, frame_id1))
-			# np_objectCentroids = np.array((np_objectCentroids_balloon1, np_objectCentroids_balloon2, np_objectCentroids_balloon3))
-			#
-			# inputCentroids_balloon1 = np_objectCentroids_balloon1 + np.array((0, 0, 10, 0, 0, 0, 0))
-			# inputCentroids_balloon2 = np_objectCentroids_balloon2 + np.array((0, 0, 50, 0, 0, 0, 0))
-			# inputCentroids_balloon3 = np_objectCentroids_balloon3 + np.array((0, 0, 150, 0, 0, 0, 0))
-
-			center_x1 = 0
-			center_y1 = 0
-			np_objectCentroids_balloon1 = np.array((center_x1, center_y1))
-			np_objectCentroids_balloon2 = np.array((center_x1 + 100, center_y1))
-			np_objectCentroids_balloon3 = np.array((center_x1 + 200, center_y1))
-			np_objectCentroids = np.array((np_objectCentroids_balloon1, np_objectCentroids_balloon2, np_objectCentroids_balloon3))
-
-			num_of_tracked_objects = np_objectCentroids.shape[0]
-			objectIDs = []
-			self.objects = OrderedDict()
-			counter = 0
-			for tracked_index in range(0, num_of_tracked_objects):
-				object_id = np_objectCentroids[tracked_index]
-				objectIDs.append(tracked_index)
-				self.objects[counter] = object_id
-				counter += 1
-
-
-
-			inputCentroids_balloon1 = np_objectCentroids_balloon1 + np.array((0, 15))
-			inputCentroids_balloon2 = np_objectCentroids_balloon2 + np.array((0, 5))
-			inputCentroids_balloon3 = np_objectCentroids_balloon3 + np.array((0, 1225))
-			inputCentroids_balloon4 = np_objectCentroids_balloon3 + np.array((0, 25))
-
-			inputCentroids = np.array((inputCentroids_balloon1, inputCentroids_balloon2, inputCentroids_balloon3, inputCentroids_balloon4))
-
+			#nn = np.linalg.norm(np_objectCentroids - inputCentroids[0, :])
 			D = dist.cdist(np_objectCentroids, inputCentroids)
 			#D[i, j] = np.linalg.norm(np_objectCentroids[i, :] - inputCentroids[j, :])
 
@@ -136,24 +94,14 @@ class CentroidTracker():
 			# indexes based on their minimum values so that the row
 			# with the smallest value as at the *front* of the index
 			# list
-
-			# D_min_0[i] = min dist from inputCentroids[i, :] to any of the balloons in np_objectCentroids
 			D_min_0 = D.min(axis=0)
-
-			# D_min_1[i] = min dist from np_objectCentroids[i, :] to any of the balloons in inputCentroids
 			D_min_1 = D.min(axis=1)
-
-			rows = D_min_1.argsort()
+			rows = D.min(axis=1).argsort()
 
 			# next, we perform a similar process on the columns by
 			# finding the smallest value in each column and then
 			# sorting using the previously computed row index list
-			D_argmin_1 = D.argmin(axis=1)
-			cols = D_argmin_1[rows]
-			# if for example cols = [0, 1, 3] it means that:
-			# balloon 0 in inputCentroids is suitable to balloon 0 in np_objectCentroids
-			# balloon 1 in inputCentroids is suitable to balloon 1 in np_objectCentroids
-			# balloon 2 in inputCentroids is suitable to balloon 3 in np_objectCentroids
+			cols = D.argmin(axis=1)[rows]
 
 			# in order to determine if we need to update, register,
 			# or deregister an object we need to keep track of which
@@ -174,8 +122,7 @@ class CentroidTracker():
 				# set its new centroid, and reset the disappeared
 				# counter
 				objectID = objectIDs[row]
-				suitable_inputCentroids = inputCentroids[col, :]
-				self.objects[objectID] = suitable_inputCentroids
+				self.objects[objectID] = inputCentroids[col]
 				self.disappeared[objectID] = 0
 
 				# indicate that we have examined each of the row and
