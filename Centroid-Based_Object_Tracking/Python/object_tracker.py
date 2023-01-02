@@ -31,8 +31,8 @@ net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
 print("[INFO] starting video stream...")
 #vs = VideoStream(src=0).start()
 
-input_file_name = 'balloons_video_ninja_room'
-input_file_full_path = f'../../input_data/videos/{input_file_name}.mp4'
+input_file_name = 'david'
+input_file_full_path = f'../../input_data/videos/{input_file_name}.MOV'
 vs = cv2.VideoCapture(input_file_full_path)
 #vs = cv2.VideoCapture(0)
 time.sleep(2.0)
