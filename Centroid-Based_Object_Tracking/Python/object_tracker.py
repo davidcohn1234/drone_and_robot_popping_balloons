@@ -9,6 +9,7 @@ import imutils
 import time
 import cv2
 import torch
+import os
 
 
 def count_pixels_in_color_range(colorLower, colorUpper, frame, colorCode=cv2.COLOR_BGR2HSV):
@@ -148,14 +149,36 @@ def main():
 
     model = torch.hub.load('ultralytics/yolov5', 'custom', path='../../balloons_weights.pt')
     model.conf = 0.8
+    frame_index = 0
+
+    images_output_folder = './balloons_images_with_data'
+
+    isExist = os.path.exists(images_output_folder)
+    if not isExist:
+        os.makedirs(images_output_folder)
 
     # loop over the frames from the video stream
     while True:
         _, frame = vs.read()
         if frame is None:
             break
+        frame_index += 1
         rects = detect_balloons_in_frame(frame, model, colors_ranges_info)
         objects = ct.update(rects)
+
+        frame_with_ballons_data = frame.copy()
+        num_of_balloons_for_current_frame = len(rects)
+        for balloon_index in range(0, num_of_balloons_for_current_frame):
+            current_bounding_box = rects[balloon_index]
+            x_min = round(current_bounding_box[0])
+            y_min = round(current_bounding_box[1])
+            x_max = round(current_bounding_box[2])
+            y_max = round(current_bounding_box[3])
+
+            start_point = (int(x_min), int(y_min))
+            end_point = (int(x_max), int(y_max))
+            balloon_color = (0, 0, 0)
+            cv2.rectangle(frame_with_ballons_data, start_point, end_point, balloon_color, thickness=2)
 
         # loop over the tracked objects
         for (objectID, centroid) in objects.items():
@@ -163,12 +186,15 @@ def main():
             # object on the output frame
             current_color = random_colors[objectID]
             text = "ID {}".format(objectID+1)
-            cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10),
+            cv2.putText(frame_with_ballons_data, text, (centroid[0] - 10, centroid[1] - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, current_color, 2)
-            cv2.circle(frame, (centroid[0], centroid[1]), 10, current_color, -1)
+            cv2.circle(frame_with_ballons_data, (centroid[0], centroid[1]), 10, current_color, -1)
 
+
+        file_full_path = "{}/{:05d}.jpg".format(images_output_folder, frame_index)
+        cv2.imwrite(file_full_path, frame_with_ballons_data)
         # show the output frame
-        cv2.imshow("Frame", frame)
+        cv2.imshow("frame_with_ballons_data", frame_with_ballons_data)
         key = cv2.waitKey(1) & 0xFF
 
         # if the `q` key was pressed, break from the loop
