@@ -8,7 +8,7 @@ class CentroidTracker():
 		# dictionaries used to keep track of mapping a given object
 		# ID to its centroid and number of consecutive frames it has
 		# been marked as "disappeared", respectively
-		self.nextObjectID = 0
+		self.num_of_unique_objects_in_video = 0
 		self.objects = OrderedDict()
 		self.disappeared = OrderedDict()
 
@@ -17,12 +17,12 @@ class CentroidTracker():
 		# need to deregister the object from tracking
 		self.maxDisappeared = maxDisappeared
 
-	def register(self, centroid):
+	def register(self, centroid_pixel_point):
 		# when registering an object we use the next available object
 		# ID to store the centroid
-		self.objects[self.nextObjectID] = centroid
-		self.disappeared[self.nextObjectID] = 0
-		self.nextObjectID += 1
+		self.objects[self.num_of_unique_objects_in_video] = centroid_pixel_point
+		self.disappeared[self.num_of_unique_objects_in_video] = 0
+		self.num_of_unique_objects_in_video += 1
 
 	def deregister(self, objectID):
 		# to deregister an object ID we delete the object ID from
@@ -84,7 +84,8 @@ class CentroidTracker():
 			# indexes based on their minimum values so that the row
 			# with the smallest value as at the *front* of the index
 			# list
-			rows = D.min(axis=1).argsort()
+			D_min_axis_1 = D.min(axis=1)
+			rows = D_min_axis_1.argsort()
 
 			# next, we perform a similar process on the columns by
 			# finding the smallest value in each column and then

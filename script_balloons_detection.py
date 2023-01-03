@@ -3,8 +3,8 @@ import torch
 import os
 import numpy as np
 
-def count_pixels_in_color_range(colorLower, colorUpper, frame, code=cv2.COLOR_BGR2HSV):
-    hsv_frame = cv2.cvtColor(frame, code)
+def count_pixels_in_color_range(colorLower, colorUpper, frame, colorCode=cv2.COLOR_BGR2HSV):
+    hsv_frame = cv2.cvtColor(frame, colorCode)
     mask = cv2.inRange(hsv_frame, colorLower, colorUpper)
     num_of_pixels = cv2.countNonZero(mask)
     return num_of_pixels
@@ -26,33 +26,85 @@ def calc_dist_from_point_to_rectangular_box(point, np_lower, np_upper):
     dist = np.linalg.norm(point - closest_point_on_box)
     return dist
 
-def detect_balloon_data(frame, colors_ranges_info, sub_image):
-    colorCode = cv2.COLOR_BGR2HSV
+def detect_balloon_data(frame, current_balloon_data, colors_ranges_info):
+    x_ratio = 0.2
+    y_ratio = 0.2
+    x_min = current_balloon_data[0]
+    y_min = current_balloon_data[1]
+    x_max = current_balloon_data[2]
+    y_max = current_balloon_data[3]
+    balloon_width = x_max - x_min
+    balloon_height = y_max - y_min
+    x_start = int(x_min + x_ratio * balloon_width)
+    x_end = int(x_min + (1 - x_ratio) * balloon_width)
+
+    y_start = int(y_min + y_ratio * balloon_height)
+    y_end = int(y_min + (1 - y_ratio) * balloon_height)
+
+    sub_image = frame[y_start: y_end, x_start: x_end, :]
     num_of_colors = len(colors_ranges_info)
     colors_num_of_pixels = np.zeros([num_of_colors])
     for index, single_color_range_info in enumerate(colors_ranges_info):
         lower = single_color_range_info["lower"]
         upper = single_color_range_info["upper"]
-        single_color_num_of_pixels = count_pixels_in_color_range(lower, upper, frame, colorCode)
+        single_color_num_of_pixels = count_pixels_in_color_range(lower, upper, sub_image, colorCode=cv2.COLOR_BGR2HSV)
         colors_num_of_pixels[index] = single_color_num_of_pixels
     max_index = colors_num_of_pixels.argmax()
     balloon_data = colors_ranges_info[max_index]
     if np.sum(colors_num_of_pixels) == 0:
-        # distances = np.zeros([num_of_colors])
-        # hsv_sub_image = cv2.cvtColor(sub_image, colorCode)
-        # average_pixel = np.mean(hsv_sub_image, axis=(0, 1))
-        # for index, single_color_range_info in enumerate(colors_ranges_info):
-        #     np_lower = np.array(single_color_range_info["lower"])
-        #     np_upper = np.array(single_color_range_info["upper"])
-        #     dist_from_point_to_rectangular_box = calc_dist_from_point_to_rectangular_box(average_pixel, np_lower, np_upper)
-        #     distances[index] = dist_from_point_to_rectangular_box
-        # min_index = distances.argmin()
-        # balloon_data = colors_ranges_info[min_index]
         unknown_color_info = {"name": 'unknown', "lower": (0, 0, 0), "upper": (0, 0, 0), "rgb_color": (0, 0, 0)}
         return unknown_color_info
     return balloon_data
 
+def detect_balloons_in_frame(frame, model, colors_ranges_info):
+    results = model(frame)
 
+    frame_pandas_results = results.pandas()
+    balloons_dataframes = frame_pandas_results.xyxy[0]
+    balloons_numpy_locations = balloons_dataframes.to_numpy()
+    num_of_balloons = balloons_numpy_locations.shape[0]
+
+
+    frame_with_ballons_data = frame.copy()
+    rects = []
+    for balloon_index in range(0, num_of_balloons):
+
+        current_balloon_data = balloons_numpy_locations[balloon_index]
+
+        x_min = current_balloon_data[0]
+        y_min = current_balloon_data[1]
+        x_max = current_balloon_data[2]
+        y_max = current_balloon_data[3]
+
+        single_balloon_rectangle = np.array([x_min, y_min, x_max, y_max])
+        rects.append(single_balloon_rectangle.astype("int"))
+
+        start_point = (int(x_min), int(y_min))
+        end_point = (int(x_max), int(y_max))
+        x_middle = int(0.5 * (x_min + x_max))
+        y_middle = int(0.5 * (y_min + y_max))
+
+
+
+
+
+        balloon_data = detect_balloon_data(frame, current_balloon_data, colors_ranges_info)
+        balloon_color_name = balloon_data["name"]
+        balloon_color = balloon_data["rgb_color"]
+
+
+        cv2.rectangle(frame_with_ballons_data, start_point, end_point, balloon_color, thickness=2)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        balloonFontScale = 0.8
+        balloonThickness = 2
+        center = (x_middle, y_middle)
+        cv2.putText(frame_with_ballons_data, f'{balloon_color_name}', center, font,
+                    balloonFontScale, balloon_color, balloonThickness, cv2.LINE_AA)
+
+        confidence = current_balloon_data[4]
+        obj_class = current_balloon_data[5]
+        obj_name = current_balloon_data[6]
+    return rects
 
 
 def main():
@@ -70,90 +122,20 @@ def main():
     model = torch.hub.load('ultralytics/yolov5', 'custom', path='./balloons_weights.pt')
     model.conf = 0.8
 
+    images_output_folder = './balloons_images_with_data'
+
+    isExist = os.path.exists(images_output_folder)
+    if not isExist:
+        os.makedirs(images_output_folder)
+
     frame_index = 0
     while True:
         frame_index += 1
         _, frame = vid.read()
         if frame is None:
             break
-        [frame_height, frame_width, channels] = frame.shape
-        results = model(frame)
-
-
-        frame_pandas_resutls = results.pandas()
-        balloons_dataframes = frame_pandas_resutls.xyxy[0]
-        balloons_numpy_locations = balloons_dataframes.to_numpy()
-        num_of_balloons = balloons_numpy_locations.shape[0]
-        x_ratio = 0.2
-        y_ratio = 0.2
         print(f'frame_index = {frame_index}')
-
-        images_output_folder = './balloons_images_with_data'
-
-        isExist = os.path.exists(images_output_folder)
-        if not isExist:
-            os.makedirs(images_output_folder)
-
-        frame_with_ballons_data = frame.copy()
-        for balloon_index in range(0,num_of_balloons):
-            mask_RGB = np.zeros([frame_height, frame_width, channels], dtype=frame.dtype)
-            current_balloon_data = balloons_numpy_locations[balloon_index]
-            x_min = current_balloon_data[0]
-            y_min = current_balloon_data[1]
-            x_max = current_balloon_data[2]
-            y_max = current_balloon_data[3]
-            start_point = (int(x_min), int(y_min))
-            end_point = (int(x_max), int(y_max))
-            x_middle = int(0.5 * (x_min + x_max))
-            y_middle = int(0.5 * (y_min + y_max))
-            balloon_width = x_max - x_min
-            balloon_height = y_max - y_min
-
-            x_start = int(x_min + x_ratio * balloon_width)
-            x_end = int(x_min + (1 - x_ratio) * balloon_width)
-
-            y_start = int(y_min + y_ratio * balloon_height)
-            y_end = int(y_min + (1 - y_ratio) * balloon_height)
-
-
-
-
-
-
-
-
-            sub_image = frame[y_start : y_end, x_start : x_end, :]
-
-
-
-            mask_RGB[y_start : y_end, x_start : x_end, :] = sub_image
-
-            # if frame_index == 260:
-            #     cv2.imshow('mask_RGB', mask_RGB)
-            #     key = cv2.waitKey(0) & 0xFF
-
-
-            balloon_data = detect_balloon_data(mask_RGB, colors_ranges_info, sub_image)
-            balloon_color_name = balloon_data["name"]
-            balloon_color = balloon_data["rgb_color"]
-
-            thickness = 2
-            frame_with_ballons_data = cv2.rectangle(frame_with_ballons_data, start_point, end_point, balloon_color, thickness)
-
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            balloonFontScale = 0.8
-            balloonThickness = 2
-            center = (x_middle, y_middle)
-            cv2.putText(frame_with_ballons_data, f'{balloon_color_name}', center, font,
-                        balloonFontScale, balloon_color, balloonThickness, cv2.LINE_AA)
-
-
-
-            confidence = current_balloon_data[4]
-            obj_class = current_balloon_data[5]
-            obj_name = current_balloon_data[6]
-            david5 = 5
-        #cv2.imshow('Video Live IP cam', results.render()[0])
+        frame_with_ballons_data = detect_balloons_in_frame(frame, model, colors_ranges_info)
 
         font = cv2.FONT_HERSHEY_SIMPLEX
         fontScale = 1
