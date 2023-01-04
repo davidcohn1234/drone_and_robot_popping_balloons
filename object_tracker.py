@@ -95,23 +95,11 @@ def detect_balloons_in_frame(frame, model, colors_ranges_info):
 
 
 def main():
-    # construct the argument parse and parse the arguments
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-p", "--prototxt", required=True,
-                    help="path to Caffe 'deploy' prototxt file")
-    ap.add_argument("-m", "--model", required=True,
-                    help="path to Caffe pre-trained model")
-    ap.add_argument("-c", "--confidence", type=float, default=0.5,
-                    help="minimum probability to filter weak detections")
-    args = vars(ap.parse_args())
+
 
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker()
-    (H, W) = (None, None)
 
-    # load our serialized model from disk
-    print("[INFO] loading model...")
-    net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
 
     # initialize the video stream and allow the camera sensor to warmup
     print("[INFO] starting video stream...")
@@ -119,7 +107,7 @@ def main():
 
     input_file_name = 'balloons_video_ninja_room.mp4'
     #input_file_name = 'david.MOV'
-    input_file_full_path = f'../../input_data/videos/{input_file_name}'
+    input_file_full_path = f'./input_data/videos/{input_file_name}'
     vs = cv2.VideoCapture(input_file_full_path)
     # vs = cv2.VideoCapture(0)
     time.sleep(2.0)
@@ -147,11 +135,11 @@ def main():
                      (127, 127, 0),
                      (127, 127, 127)]
 
-    model = torch.hub.load('ultralytics/yolov5', 'custom', path='../../balloons_weights.pt')
+    model = torch.hub.load('ultralytics/yolov5', 'custom', path='./balloons_weights.pt')
     model.conf = 0.8
     frame_index = 0
 
-    images_output_folder = './balloons_images_with_data'
+    images_output_folder = './balloons_images_with_tracking_data'
 
     isExist = os.path.exists(images_output_folder)
     if not isExist:
