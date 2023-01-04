@@ -163,10 +163,16 @@ def main():
         if frame is None:
             break
         frame_index += 1
+        # if frame_index == 459:
+        if frame_index == 217:
+            david = 5
         rects = detect_balloons_in_frame(frame, model, colors_ranges_info)
-        objects = ct.update(rects)
+        objects, mapping_object_ids_to_input_centroids = ct.update(rects)
 
         frame_with_ballons_data = frame.copy()
+        frame_index_str = "{}".format(frame_index)
+        org = (50, 50)
+        cv2.putText(frame_with_ballons_data, frame_index_str, org, cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 255), 2)
         num_of_balloons_for_current_frame = len(rects)
         for balloon_index in range(0, num_of_balloons_for_current_frame):
             current_bounding_box = rects[balloon_index]
@@ -177,18 +183,34 @@ def main():
 
             start_point = (int(x_min), int(y_min))
             end_point = (int(x_max), int(y_max))
-            balloon_color = (0, 0, 0)
-            cv2.rectangle(frame_with_ballons_data, start_point, end_point, balloon_color, thickness=2)
 
-        # loop over the tracked objects
-        for (objectID, centroid) in objects.items():
-            # draw both the ID of the object and the centroid of the
-            # object on the output frame
+            x_center = round(0.5 * (x_min + x_max))
+            y_center = round(0.5 * (y_min + y_max))
+
+
+
+            objectID = mapping_object_ids_to_input_centroids[balloon_index]
+            centroid = np.array((int(x_center), int(y_center)))
             current_color = random_colors[objectID]
-            text = "ID {}".format(objectID+1)
+            text = "ID {}".format(objectID)
             cv2.putText(frame_with_ballons_data, text, (centroid[0] - 10, centroid[1] - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, current_color, 2)
+            coordinateText = "({}, {})".format(x_center, y_center)
+            cv2.putText(frame_with_ballons_data, coordinateText, (centroid[0] + 15, centroid[1] + 15),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, current_color, 2)
             cv2.circle(frame_with_ballons_data, (centroid[0], centroid[1]), 10, current_color, -1)
+            cv2.rectangle(frame_with_ballons_data, start_point, end_point, current_color, thickness=2)
+
+
+        # # loop over the tracked objects
+        # for (objectID, centroid) in objects.items():
+        #     # draw both the ID of the object and the centroid of the
+        #     # object on the output frame
+        #     current_color = random_colors[objectID]
+        #     text = "ID {}".format(objectID+1)
+        #     cv2.putText(frame_with_ballons_data, text, (centroid[0] - 10, centroid[1] - 10),
+        #                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, current_color, 2)
+        #     cv2.circle(frame_with_ballons_data, (centroid[0], centroid[1]), 10, current_color, -1)
 
 
         file_full_path = "{}/{:05d}.jpg".format(images_output_folder, frame_index)
