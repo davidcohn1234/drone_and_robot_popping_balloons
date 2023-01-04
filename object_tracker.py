@@ -111,9 +111,12 @@ def main():
 
     folder_name = '03_balloons_video_ninja_room'
     input_folder_full_path = f'./input_data/images/' + folder_name
-    input_file_name = '00277.jpg'
-    image_full_path = input_folder_full_path + '/' + input_file_name
+    min_frame_index = 460
+    max_frame_index = 464
+    # input_file_name = range(min_frame_index, max_frame_index + 1)
+    # image_full_path = input_folder_full_path + '/' + input_file_name
     jpg_files = sorted(glob.glob(input_folder_full_path + '/*.jpg'))
+    jpg_files = jpg_files[min_frame_index:max_frame_index]
     # jpg_files = [image_full_path]
     frame_milliseconds = 1
 
