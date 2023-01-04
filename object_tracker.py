@@ -10,6 +10,8 @@ import time
 import cv2
 import torch
 import os
+import common_utils
+import glob
 
 
 def count_pixels_in_color_range(colorLower, colorUpper, frame, colorCode=cv2.COLOR_BGR2HSV):
@@ -93,23 +95,29 @@ def detect_balloons_in_frame(frame, model, colors_ranges_info):
         obj_name = current_balloon_data[6]
     return rects
 
+def create_empty_output_folder(images_output_folder):
+    isExist = os.path.exists(images_output_folder)
+    if not isExist:
+        os.makedirs(images_output_folder)
+    else:
+        files = glob.glob(images_output_folder + '/*.jpg')
+        for f in files:
+            os.remove(f)
+
 
 def main():
-
-
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker()
 
+    folder_name = '03_balloons_video_ninja_room'
+    input_folder_full_path = f'./input_data/images/' + folder_name
+    input_file_name = '00277.jpg'
+    image_full_path = input_folder_full_path + '/' + input_file_name
+    jpg_files = sorted(glob.glob(input_folder_full_path + '/*.jpg'))
+    # jpg_files = [image_full_path]
+    frame_milliseconds = 1
 
-    # initialize the video stream and allow the camera sensor to warmup
-    print("[INFO] starting video stream...")
-    # vs = VideoStream(src=0).start()
 
-    input_file_name = 'balloons_video_ninja_room.mp4'
-    #input_file_name = 'david.MOV'
-    input_file_full_path = f'./input_data/videos/{input_file_name}'
-    vs = cv2.VideoCapture(input_file_full_path)
-    # vs = cv2.VideoCapture(0)
     time.sleep(2.0)
 
     green_color_info = {"name": 'green', "lower": (42, 101, 96), "upper": (83, 168, 164), "rgb_color": (0, 255, 0)}
@@ -137,27 +145,26 @@ def main():
 
     model = torch.hub.load('ultralytics/yolov5', 'custom', path='./balloons_weights.pt')
     model.conf = 0.8
-    frame_index = 0
+
 
     images_output_folder = './balloons_images_with_tracking_data'
+    create_empty_output_folder(images_output_folder)
 
-    isExist = os.path.exists(images_output_folder)
-    if not isExist:
-        os.makedirs(images_output_folder)
+
 
     # loop over the frames from the video stream
-    while True:
-        _, frame = vs.read()
-        if frame is None:
+    for frame_index, jpg_file in enumerate(jpg_files):
+        rgb_image = cv2.imread(jpg_file)
+        if rgb_image is None:
             break
-        frame_index += 1
+
         # if frame_index == 459:
         if frame_index == 217:
             david = 5
-        rects = detect_balloons_in_frame(frame, model, colors_ranges_info)
+        rects = detect_balloons_in_frame(rgb_image, model, colors_ranges_info)
         objects, mapping_object_ids_to_input_centroids = ct.update(rects)
 
-        frame_with_ballons_data = frame.copy()
+        frame_with_ballons_data = rgb_image.copy()
         frame_index_str = "{}".format(frame_index)
         org = (50, 50)
         cv2.putText(frame_with_ballons_data, frame_index_str, org, cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 255), 2)
@@ -205,7 +212,7 @@ def main():
         cv2.imwrite(file_full_path, frame_with_ballons_data)
         # show the output frame
         cv2.imshow("frame_with_ballons_data", frame_with_ballons_data)
-        key = cv2.waitKey(1) & 0xFF
+        key = cv2.waitKey(frame_milliseconds) & 0xFF
 
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
