@@ -57,8 +57,8 @@ class CentroidTracker():
 		# loop over the bounding box rectangles
 		for (i, (startX, startY, endX, endY)) in enumerate(rects):
 			# use the bounding box coordinates to derive the centroid
-			cX = int((startX + endX) / 2.0)
-			cY = int((startY + endY) / 2.0)
+			cX = round((startX + endX) / 2.0)
+			cY = round((startY + endY) / 2.0)
 			inputCentroids[i] = (cX, cY)
 
 		# if we are currently not tracking any objects take the input
@@ -115,7 +115,8 @@ class CentroidTracker():
 				# set its new centroid, and reset the disappeared
 				# counter
 				objectID = objectIDs[row]
-				self.objects[objectID] = inputCentroids[col]
+				current_input_centroid = inputCentroids[col]
+				self.objects[objectID] = current_input_centroid
 				self.disappeared[objectID] = 0
 				mapping_object_ids_to_input_centroids[col] = objectID
 
