@@ -105,18 +105,30 @@ def create_empty_output_folder(images_output_folder):
             os.remove(f)
 
 
+def plot_explanation_for_centroid_tracker(all_frames_data_list):
+    frame_1_data = all_frames_data_list[0]
+    frame_2_data = all_frames_data_list[6]
+
+    rgb_image_1 = frame_1_data['rgb_image']
+    rgb_image_2 = frame_2_data['rgb_image']
+
+    combined_rgb = int(0.5 * (rgb_image_1 + rgb_image_2))
+    cv2.imshow('combined_rgb', combined_rgb)
+    cv2.waitKey(0)
+
+
 def main():
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker()
 
     folder_name = '03_balloons_video_ninja_room'
     input_folder_full_path = f'./input_data/images/' + folder_name
-    min_frame_index = 460
-    max_frame_index = 464
+    min_frame_index = 232
+    max_frame_index = 239
     # input_file_name = range(min_frame_index, max_frame_index + 1)
     # image_full_path = input_folder_full_path + '/' + input_file_name
     jpg_files = sorted(glob.glob(input_folder_full_path + '/*.jpg'))
-    jpg_files = jpg_files[min_frame_index:max_frame_index]
+    #jpg_files = jpg_files[min_frame_index:max_frame_index+1]
     # jpg_files = [image_full_path]
     frame_milliseconds = 1
 
@@ -150,17 +162,21 @@ def main():
     model.conf = 0.8
 
 
-    images_output_folder = './balloons_images_with_tracking_data'
+    main_output_folder = './balloons_images_with_tracking_data'
+    images_output_folder = main_output_folder + '/' + 'images'
+    videos_output_folder = main_output_folder + '/' + 'videos'
     create_empty_output_folder(images_output_folder)
+    create_empty_output_folder(videos_output_folder)
 
-
+    debug_mode = True
 
     # loop over the frames from the video stream
+    if debug_mode:
+        all_frames_data_list = []
     for frame_index, jpg_file in enumerate(jpg_files):
         rgb_image = cv2.imread(jpg_file)
         if rgb_image is None:
             break
-
         # if frame_index == 459:
         if frame_index == 217:
             david = 5
@@ -172,6 +188,12 @@ def main():
         org = (50, 50)
         cv2.putText(frame_with_ballons_data, frame_index_str, org, cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 255), 2)
         num_of_balloons_for_current_frame = len(rects)
+        if debug_mode:
+            single_frame_data = dict()
+            single_frame_data['centroids'] = []
+            single_frame_data['rgb_image'] = rgb_image
+            single_frame_data['balloons_bounding_boxes'] = rects
+            single_frame_data['mapping_object_ids_to_input_centroids'] = mapping_object_ids_to_input_centroids
         for balloon_index in range(0, num_of_balloons_for_current_frame):
             current_bounding_box = rects[balloon_index]
             x_min = round(current_bounding_box[0])
@@ -189,16 +211,18 @@ def main():
 
             objectID = mapping_object_ids_to_input_centroids[balloon_index]
             centroid = np.array((int(x_center), int(y_center)))
+            single_frame_data['centroids'] .append(centroid)
             current_color = random_colors[objectID]
             text = "ID {}".format(objectID)
-            cv2.putText(frame_with_ballons_data, text, (centroid[0] - 10, centroid[1] - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, current_color, 2)
+            cv2.putText(frame_with_ballons_data, text, (centroid[0] - 10, centroid[1] - 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, current_color, 2)
             coordinateText = "({}, {})".format(x_center, y_center)
-            cv2.putText(frame_with_ballons_data, coordinateText, (centroid[0] + 15, centroid[1] + 15),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, current_color, 2)
+            # cv2.putText(frame_with_ballons_data, coordinateText, (centroid[0], centroid[1] + 30),
+            #             cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
             cv2.circle(frame_with_ballons_data, (centroid[0], centroid[1]), 10, current_color, -1)
             cv2.rectangle(frame_with_ballons_data, start_point, end_point, current_color, thickness=2)
-
+        if debug_mode:
+            all_frames_data_list.append(single_frame_data)
 
         # # loop over the tracked objects
         # for (objectID, centroid) in objects.items():
@@ -222,6 +246,12 @@ def main():
             break
 
     cv2.destroyAllWindows()
+
+    if debug_mode:
+        plot_explanation_for_centroid_tracker(all_frames_data_list)
+
+    video_path = videos_output_folder + '/' + folder_name + 'tracking_balloons.avi'
+    common_utils.create_video(frames_path=images_output_folder, frame_extension='jpg', video_path=video_path, frame_rate=10)
 
 
 main()
