@@ -6,12 +6,15 @@ import glob
 import os
 import re
 import platform
+import numpy as np
 
 platform_os = platform.system()
 if platform_os == "Windows":
     import win32api
+
+
     def find_file(root_folder, rex):
-        for root,dirs,files in os.walk(root_folder):
+        for root, dirs, files in os.walk(root_folder):
             for f in files:
                 result = rex.search(f)
                 if result:
@@ -19,14 +22,59 @@ if platform_os == "Windows":
                     return first_path
         return None
 
+
     def find_file_in_all_drives(file_name):
-        #create a regular expression for the file
+        # create a regular expression for the file
         rex = re.compile(file_name)
         for drive in win32api.GetLogicalDriveStrings().split('\000')[:-1]:
-            first_path = find_file( drive, rex )
+            first_path = find_file(drive, rex)
             if first_path is not None:
                 return first_path
         return None
+
+
+def drawline(img, pt1, pt2, color, thickness=1, style='dotted', gap=20):
+    dist = ((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2) ** .5
+    pts = []
+    for i in np.arange(0, dist, gap):
+        r = i / dist
+        x = int((pt1[0] * (1 - r) + pt2[0] * r) + .5)
+        y = int((pt1[1] * (1 - r) + pt2[1] * r) + .5)
+        p = (x, y)
+        pts.append(p)
+
+    if style == 'dotted':
+        for p in pts:
+            cv2.circle(img, p, thickness, color, -1)
+    else:
+        s = pts[0]
+        e = pts[0]
+        i = 0
+        for p in pts:
+            s = e
+            e = p
+            if i % 2 == 1:
+                cv2.line(img, s, e, color, thickness)
+            i += 1
+
+
+def drawpoly(img, pts, color, thickness=1, style='dotted', ):
+    s = pts[0]
+    e = pts[0]
+    pts.append(pts.pop(0))
+    for p in pts:
+        s = e
+        e = p
+        drawline(img, s, e, color, thickness, style)
+
+
+def drawrect(img, pt1, pt2, color, thickness=1, style='dotted'):
+    if style=='regular':
+        cv2.rectangle(img, pt1, pt2, color, thickness)
+    else:
+        pts = [pt1, (pt2[0], pt1[1]), pt2, (pt1[0], pt2[1])]
+        drawpoly(img, pts, color, thickness, style)
+
 
 def create_video(frames_path, frame_extension, video_path, frame_rate):
     frames_files_full_paths = glob.glob(f'{frames_path}/*.{frame_extension}')
@@ -44,6 +92,7 @@ def create_video(frames_path, frame_extension, video_path, frame_rate):
         img = cv2.imread(filename)
         out.write(img)
     out.release()
+
 
 def extract_frames_from_videos(videos_and_images_folder):
     video_folder_path = videos_and_images_folder + '/videos'
@@ -81,6 +130,7 @@ def extract_frames_from_videos(videos_and_images_folder):
                 f'video {video_count} out of {num_of_videos} videos. frame {frame_count} out of {current_video_num_of_frames} frames')
         print()
 
+
 def copy_folders(input_main_folder_full_path, output_main_folder_full_path):
     sub_folders_names = os.listdir(input_main_folder_full_path)
     sub_folders_names.sort()
@@ -95,7 +145,7 @@ def copy_folders(input_main_folder_full_path, output_main_folder_full_path):
         files = [f.path for f in os.scandir(source_sub_folder_full_path) if f.is_file()]
         files.sort()
         counter = 0
-        #counter = 1000 * sub_folder_counter
+        # counter = 1000 * sub_folder_counter
         for single_file in files:
             counter += 1
             destination_file_name = f"{counter:05}" + '.jpg'
@@ -103,13 +153,14 @@ def copy_folders(input_main_folder_full_path, output_main_folder_full_path):
             print(f'copying {single_file} to {destination_file_full_path}')
             shutil.copyfile(single_file, destination_file_full_path)
 
+
 def download_input_images_from_google_drive(zip_folder, zip_file_id):
     input_data_folder_name = 'input_data'
     input_data_folder_full_path = zip_folder + '/' + input_data_folder_name
     is_folder_exist = os.path.exists(input_data_folder_full_path)
     if is_folder_exist:
-        #if it already exists then return (nothing to do here).
-        #otherwise, it will be created when unzipping the zip file
+        # if it already exists then return (nothing to do here).
+        # otherwise, it will be created when unzipping the zip file
         return
 
     google_drive_prefix_url = 'https://drive.google.com/uc?id='
@@ -130,7 +181,6 @@ def download_input_images_from_google_drive(zip_folder, zip_file_id):
     print(f'Extracting {zip_file_name}')
     unzip_file(output_zip_file_full_path, zip_folder)
     print(f'Finished extracting {zip_file_name}')
-
 
 
 def unzip_file(zip_file_full_path, extract_dir):

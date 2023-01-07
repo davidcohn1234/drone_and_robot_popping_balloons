@@ -31,8 +31,6 @@ class CentroidTracker():
 		del self.disappeared[objectID]
 
 	def update(self, rects):
-		num_of_rects = len(rects)
-		mapping_object_ids_to_input_centroids = np.zeros(num_of_rects, int)
 		# check to see if the list of input bounding box rectangles
 		# is empty
 		if len(rects) == 0:
@@ -66,9 +64,8 @@ class CentroidTracker():
 		if len(self.objects) == 0:
 			for i in range(0, len(inputCentroids)):
 				self.register(inputCentroids[i])
-				mapping_object_ids_to_input_centroids[i] = self.num_of_unique_objects_in_video - 1
 
-		# otherwise, are are currently tracking objects so we need to
+		# otherwise, are currently tracking objects so we need to
 		# try to match the input centroids to existing object
 		# centroids
 		else:
@@ -118,7 +115,6 @@ class CentroidTracker():
 				current_input_centroid = inputCentroids[col]
 				self.objects[objectID] = current_input_centroid
 				self.disappeared[objectID] = 0
-				mapping_object_ids_to_input_centroids[col] = objectID
 
 				# indicate that we have examined each of the row and
 				# column indexes, respectively
@@ -154,7 +150,6 @@ class CentroidTracker():
 			#else:
 			for col in unusedCols:
 				self.register(inputCentroids[col])
-				mapping_object_ids_to_input_centroids[col] = self.num_of_unique_objects_in_video - 1
 
 		# return the set of trackable objects
-		return self.objects, mapping_object_ids_to_input_centroids
+		return self.objects

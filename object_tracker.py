@@ -2,6 +2,7 @@
 
 # import the necessary packages
 from centroidtracker1 import CentroidTracker
+from centroidtrackerdebugger import CentroidTrackerDebugger
 from imutils.video import VideoStream
 import numpy as np
 import argparse
@@ -105,30 +106,68 @@ def create_empty_output_folder(images_output_folder):
             os.remove(f)
 
 
+def create_image_with_balloons_data(rgb_image, bounding_boxes, color):
+    rgb_image_with_data = rgb_image.copy()
+    num_of_bounding_boxes = len(bounding_boxes)
+    for index in range(0, num_of_bounding_boxes):
+        current_bounding_box = bounding_boxes[index]
+
+        x_min = round(current_bounding_box[0])
+        y_min = round(current_bounding_box[1])
+        x_max = round(current_bounding_box[2])
+        y_max = round(current_bounding_box[3])
+
+        start_point = (int(x_min), int(y_min))
+        end_point = (int(x_max), int(y_max))
+
+        x_center = round(0.5 * (x_min + x_max))
+        y_center = round(0.5 * (y_min + y_max))
+
+        centroid = np.array((int(x_center), int(y_center)))
+        # coordinateText = "({}, {})".format(x_center, y_center)
+        # cv2.putText(rgb_image_with_data, coordinateText, (centroid[0], centroid[1] + 30),
+        #             cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
+        cv2.circle(rgb_image_with_data, (centroid[0], centroid[1]), 8, color, -1)
+        cv2.rectangle(rgb_image_with_data, start_point, end_point, color, thickness=2)
+    return rgb_image_with_data
+
 def plot_explanation_for_centroid_tracker(all_frames_data_list):
     frame_1_data = all_frames_data_list[0]
-    frame_2_data = all_frames_data_list[6]
+    frame_2_data = all_frames_data_list[1]
 
     rgb_image_1 = frame_1_data['rgb_image']
     rgb_image_2 = frame_2_data['rgb_image']
 
-    combined_rgb = int(0.5 * (rgb_image_1 + rgb_image_2))
-    cv2.imshow('combined_rgb', combined_rgb)
+    ratio_image_1 = 0.5
+    combined_rgb = (ratio_image_1 * rgb_image_1 + (1 - ratio_image_1) * rgb_image_2).astype(np.uint8)
+    bounding_boxes_frame_1 = frame_1_data['balloons_bounding_boxes']
+    combined_rgb_with_frame_1_data = create_image_with_balloons_data(combined_rgb, bounding_boxes_frame_1, color=(255, 0, 0))
+
+    bounding_boxes_frame_2 = frame_2_data['balloons_bounding_boxes']
+    combined_rgb_with_frames_data = create_image_with_balloons_data(combined_rgb_with_frame_1_data, bounding_boxes_frame_2,
+                                                                     color=(0, 0, 255))
+
+    cv2.imshow('combined_rgb_with_frames_data', combined_rgb_with_frames_data)
     cv2.waitKey(0)
 
+def save_frame(rgb_image_with_id_data, images_output_folder, frame_index):
+    file_full_path = "{}/{:05d}.jpg".format(images_output_folder, frame_index)
+    cv2.imwrite(file_full_path, rgb_image_with_id_data)
 
 def main():
     # initialize our centroid tracker and frame dimensions
     ct = CentroidTracker()
+    ct_debugger = CentroidTrackerDebugger()
 
     folder_name = '03_balloons_video_ninja_room'
     input_folder_full_path = f'./input_data/images/' + folder_name
-    min_frame_index = 232
-    max_frame_index = 239
+    min_frame_index = 47
+    max_frame_index = 50
     # input_file_name = range(min_frame_index, max_frame_index + 1)
     # image_full_path = input_folder_full_path + '/' + input_file_name
     jpg_files = sorted(glob.glob(input_folder_full_path + '/*.jpg'))
     #jpg_files = jpg_files[min_frame_index:max_frame_index+1]
+    #jpg_files = np.array(jpg_files)[[min_frame_index, max_frame_index]]
     # jpg_files = [image_full_path]
     frame_milliseconds = 1
 
@@ -142,116 +181,60 @@ def main():
     purple_color_info = {"name": 'purple', "lower": (81, 78, 106), "upper": (152, 160, 173), "rgb_color": (153, 51, 102)}
     colors_ranges_info = [green_color_info, red_color_info, blue_color_info, orange_color_info, purple_color_info]
 
-    random_colors = [(0, 0, 255),
-                     (0, 255, 0),
-                     (255, 0, 0),
-                     (0, 255, 255),
-                     (255, 0, 255),
-                     (255, 255, 0),
-                     (0, 0, 0),
-                     (0, 0, 127),
-                     (0, 127, 0),
-                     (127, 0, 127),
-                     (127, 127, 0),
-                     (0, 127, 127),
-                     (127, 0, 127),
-                     (127, 127, 0),
-                     (127, 127, 127)]
-
     model = torch.hub.load('ultralytics/yolov5', 'custom', path='./balloons_weights.pt')
     model.conf = 0.8
 
 
-    main_output_folder = './balloons_images_with_tracking_data'
-    images_output_folder = main_output_folder + '/' + 'images'
-    videos_output_folder = main_output_folder + '/' + 'videos'
-    create_empty_output_folder(images_output_folder)
-    create_empty_output_folder(videos_output_folder)
+    main_tracking_output_folder = './balloons_images_with_tracking_data'
+    images_tracking_output_folder = main_tracking_output_folder + '/' + 'images'
+    videos_tracking_output_folder = main_tracking_output_folder + '/' + 'videos'
+    create_empty_output_folder(images_tracking_output_folder)
+    create_empty_output_folder(videos_tracking_output_folder)
+
+    main_id_output_folder = './balloons_images_with_id_data'
+    images_id_output_folder = main_id_output_folder + '/' + 'images'
+    videos_id_output_folder = main_id_output_folder + '/' + 'videos'
+    create_empty_output_folder(images_id_output_folder)
+    create_empty_output_folder(videos_id_output_folder)
+
 
     debug_mode = True
 
     # loop over the frames from the video stream
     if debug_mode:
         all_frames_data_list = []
+    rgb_image = None
     for frame_index, jpg_file in enumerate(jpg_files):
+        prev_rgb_image = rgb_image
         rgb_image = cv2.imread(jpg_file)
         if rgb_image is None:
             break
-        # if frame_index == 459:
-        if frame_index == 217:
-            david = 5
         rects = detect_balloons_in_frame(rgb_image, model, colors_ranges_info)
-        objects, mapping_object_ids_to_input_centroids = ct.update(rects)
-
-        frame_with_ballons_data = rgb_image.copy()
-        frame_index_str = "{}".format(frame_index)
-        org = (50, 50)
-        cv2.putText(frame_with_ballons_data, frame_index_str, org, cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 255), 2)
-        num_of_balloons_for_current_frame = len(rects)
-        if debug_mode:
-            single_frame_data = dict()
-            single_frame_data['centroids'] = []
-            single_frame_data['rgb_image'] = rgb_image
-            single_frame_data['balloons_bounding_boxes'] = rects
-            single_frame_data['mapping_object_ids_to_input_centroids'] = mapping_object_ids_to_input_centroids
-        for balloon_index in range(0, num_of_balloons_for_current_frame):
-            current_bounding_box = rects[balloon_index]
-            x_min = round(current_bounding_box[0])
-            y_min = round(current_bounding_box[1])
-            x_max = round(current_bounding_box[2])
-            y_max = round(current_bounding_box[3])
-
-            start_point = (int(x_min), int(y_min))
-            end_point = (int(x_max), int(y_max))
-
-            x_center = round(0.5 * (x_min + x_max))
-            y_center = round(0.5 * (y_min + y_max))
-
-
-
-            objectID = mapping_object_ids_to_input_centroids[balloon_index]
-            centroid = np.array((int(x_center), int(y_center)))
-            single_frame_data['centroids'] .append(centroid)
-            current_color = random_colors[objectID]
-            text = "ID {}".format(objectID)
-            cv2.putText(frame_with_ballons_data, text, (centroid[0] - 10, centroid[1] - 20),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, current_color, 2)
-            coordinateText = "({}, {})".format(x_center, y_center)
-            # cv2.putText(frame_with_ballons_data, coordinateText, (centroid[0], centroid[1] + 30),
-            #             cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
-            cv2.circle(frame_with_ballons_data, (centroid[0], centroid[1]), 10, current_color, -1)
-            cv2.rectangle(frame_with_ballons_data, start_point, end_point, current_color, thickness=2)
-        if debug_mode:
-            all_frames_data_list.append(single_frame_data)
-
-        # # loop over the tracked objects
-        # for (objectID, centroid) in objects.items():
-        #     # draw both the ID of the object and the centroid of the
-        #     # object on the output frame
-        #     current_color = random_colors[objectID]
-        #     text = "ID {}".format(objectID+1)
-        #     cv2.putText(frame_with_ballons_data, text, (centroid[0] - 10, centroid[1] - 10),
-        #                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, current_color, 2)
-        #     cv2.circle(frame_with_ballons_data, (centroid[0], centroid[1]), 10, current_color, -1)
-
-
-        file_full_path = "{}/{:05d}.jpg".format(images_output_folder, frame_index)
-        cv2.imwrite(file_full_path, frame_with_ballons_data)
-        # show the output frame
-        cv2.imshow("frame_with_ballons_data", frame_with_ballons_data)
+        rgb_image_with_tracking_data, rgb_image_with_id_data = ct_debugger.get_image_with_matching_objects(rects, rgb_image, prev_rgb_image, frame_index)
+        save_frame(rgb_image_with_id_data, images_id_output_folder, frame_index)
+        cv2.imshow("rgb_image_with_id_data", rgb_image_with_id_data)
         key = cv2.waitKey(frame_milliseconds) & 0xFF
-
-        # if the `q` key was pressed, break from the loop
         if key == ord("q"):
             break
+
+        save_frame(rgb_image_with_tracking_data, images_tracking_output_folder, frame_index)
+        cv2.imshow("rgb_image_with_tracking_data", rgb_image_with_tracking_data)
+        key = cv2.waitKey(frame_milliseconds) & 0xFF
+        if key == ord("q"):
+            break
+
 
     cv2.destroyAllWindows()
 
     if debug_mode:
-        plot_explanation_for_centroid_tracker(all_frames_data_list)
+        pass
+        #plot_explanation_for_centroid_tracker(all_frames_data_list)
 
-    video_path = videos_output_folder + '/' + folder_name + 'tracking_balloons.avi'
-    common_utils.create_video(frames_path=images_output_folder, frame_extension='jpg', video_path=video_path, frame_rate=10)
+    video_path_id_data = videos_id_output_folder + '/' + folder_name + 'tracking_balloons.avi'
+    common_utils.create_video(frames_path=images_id_output_folder, frame_extension='jpg', video_path=video_path_id_data, frame_rate=10)
+
+    video_path_tracking_data = videos_tracking_output_folder + '/' + folder_name + 'tracking_balloons.avi'
+    common_utils.create_video(frames_path=images_tracking_output_folder, frame_extension='jpg', video_path=video_path_tracking_data, frame_rate=10)
 
 
 main()
