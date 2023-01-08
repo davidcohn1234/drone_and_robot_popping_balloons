@@ -1,3 +1,5 @@
+# taken from this line:
+# https://realpython.com/introduction-to-python-generators/
 
 def csv_reader(file_name):
     file = open(file_name)
