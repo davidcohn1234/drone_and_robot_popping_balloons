@@ -100,7 +100,7 @@ class Robo_baloon(object):
             self.ninja1.stopMove()
         else:
             self.simulated_frame_index = 0
-            self.images_folder = './input_data/images/david_house_01'
+            self.images_folder = './input_data/images/01_david_house'
 
         # self.init_drone()
         self.init_PID()
