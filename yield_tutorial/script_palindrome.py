@@ -35,7 +35,10 @@ def main():
         k = next(pal_gen)
         print(f'main: k={k}, after next(pal_gen)')
         digits = len(str(k))
-        pal_gen.send(10 ** (digits))
+        num = 10 ** (digits)
+        print(f'main: before pal_gen.send({num})')
+        pal_gen.send(num)
+        print(f'main: after pal_gen.send({num})')
         print()
 
     # for i in range(200):
