@@ -1,13 +1,5 @@
-# python object_tracker.py --prototxt deploy.prototxt --model res10_300x300_ssd_iter_140000.caffemodel
-
-# import the necessary packages
 from centroidtracker1 import CentroidTracker
 from centroidtrackerdebugger import CentroidTrackerDebugger
-from imutils.video import VideoStream
-import numpy as np
-import argparse
-import imutils
-import time
 import cv2
 import torch
 import os
@@ -70,8 +62,8 @@ def main():
         rgb_image = cv2.imread(jpg_file)
         if rgb_image is None:
             break
-        bounding_boxes = yolo_balloon_detection.detect_objects_in_frame(rgb_image, model)
-        rgb_image_with_tracking_data, rgb_image_with_id_data = ct_debugger.get_image_with_matching_objects(bounding_boxes, rgb_image, prev_rgb_image, frame_index)
+        objects_data = yolo_balloon_detection.detect_objects_in_frame(rgb_image, model)
+        rgb_image_with_tracking_data, rgb_image_with_id_data = ct_debugger.get_image_with_matching_objects(objects_data, rgb_image, prev_rgb_image, frame_index)
         save_frame(rgb_image_with_id_data, images_id_output_folder, frame_index)
         cv2.imshow("rgb_image_with_id_data", rgb_image_with_id_data)
         key = cv2.waitKey(frame_milliseconds) & 0xFF

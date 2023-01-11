@@ -21,13 +21,13 @@ class YoloObjectDetection:
         num_of_pixels = cv2.countNonZero(mask)
         return num_of_pixels
 
-    def detect_object_color_data(self, frame, current_object_data):
+    def detect_object_color_data(self, frame, single_object_yolo_data):
         x_ratio = 0.2
         y_ratio = 0.2
-        x_min = current_object_data[0]
-        y_min = current_object_data[1]
-        x_max = current_object_data[2]
-        y_max = current_object_data[3]
+        x_min = single_object_yolo_data[0]
+        y_min = single_object_yolo_data[1]
+        x_max = single_object_yolo_data[2]
+        y_max = single_object_yolo_data[3]
         object_width = x_max - x_min
         object_height = y_max - y_min
         x_start = int(x_min + x_ratio * object_width)
@@ -56,35 +56,44 @@ class YoloObjectDetection:
 
         frame_pandas_results = results.pandas()
         objects_dataframes = frame_pandas_results.xyxy[0]
-        objects_numpy_locations = objects_dataframes.to_numpy()
-        num_of_objects = objects_numpy_locations.shape[0]
+        objects_numpy_yolo_data = objects_dataframes.to_numpy()
+        num_of_objects = objects_numpy_yolo_data.shape[0]
 
 
         frame_with_ballons_data = frame.copy()
-        rects = []
+        #rects = []
+        objects_data = []
         for object_index in range(0, num_of_objects):
+            single_object_yolo_data = objects_numpy_yolo_data[object_index]
 
-            current_object_data = objects_numpy_locations[object_index]
+            x_min = single_object_yolo_data[0]
+            y_min = single_object_yolo_data[1]
+            x_max = single_object_yolo_data[2]
+            y_max = single_object_yolo_data[3]
+            confidence = single_object_yolo_data[4]
+            obj_class = single_object_yolo_data[5]
+            obj_name = single_object_yolo_data[6]
 
-            x_min = current_object_data[0]
-            y_min = current_object_data[1]
-            x_max = current_object_data[2]
-            y_max = current_object_data[3]
-            confidence = current_object_data[4]
-            obj_class = current_object_data[5]
-            obj_name = current_object_data[6]
-
-            single_object_rectangle = np.array([x_min, y_min, x_max, y_max])
-            rects.append(single_object_rectangle.astype("int"))
+            single_object_bounding_box = np.array([x_min, y_min, x_max, y_max]).astype("int")
+            #rects.append(single_object_bounding_box)
 
             start_point = (int(x_min), int(y_min))
             end_point = (int(x_max), int(y_max))
             x_middle = int(0.5 * (x_min + x_max))
             y_middle = int(0.5 * (y_min + y_max))
 
-            object_data = self.detect_object_color_data(frame, current_object_data)
-            object_color_name = object_data["name"]
-            object_color = object_data["rgb_color"]
+            single_object_color_data = self.detect_object_color_data(frame, single_object_yolo_data)
+            single_object_data = dict()
+            single_object_data['bounding_box'] = single_object_bounding_box
+            single_object_data['confidence'] = confidence
+            single_object_data['obj_class'] = obj_class
+            single_object_data['obj_name'] = obj_name
+            single_object_data['color_data'] = single_object_color_data
+            objects_data.append(single_object_data)
+
+
+            object_color_name = single_object_color_data["name"]
+            object_color = single_object_color_data["rgb_color"]
 
 
             cv2.rectangle(frame_with_ballons_data, start_point, end_point, object_color, thickness=2)
@@ -96,4 +105,4 @@ class YoloObjectDetection:
                         objectFontScale, object_color, objectThickness, cv2.LINE_AA)
 
 
-        return rects
+        return objects_data

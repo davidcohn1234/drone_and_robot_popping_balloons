@@ -109,7 +109,7 @@ class CentroidTrackerDebugger():
 		#cv2.rectangle(rgb_image_with_data, start_point, end_point, color, thickness=2)
 		return rgb_image_with_data
 
-	def get_image_with_matching_objects(self, rects, rgb_image, prev_rgb_image, frame_index):
+	def get_image_with_matching_objects(self, objects_data, rgb_image, prev_rgb_image, frame_index):
 		# check to see if the list of input bounding box rectangles
 		# is empty
 		if prev_rgb_image is None:
