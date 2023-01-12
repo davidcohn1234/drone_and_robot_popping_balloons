@@ -112,6 +112,7 @@ class CentroidTrackerDebugger():
 	def get_image_with_matching_objects(self, objects_data, rgb_image, prev_rgb_image, frame_index):
 		# check to see if the list of input bounding box rectangles
 		# is empty
+		bounding_boxes = [single_object_data['bounding_box'] for single_object_data in objects_data]
 		if prev_rgb_image is None:
 			rgb_image_with_tracking_data = rgb_image.copy()
 		else:
@@ -124,14 +125,14 @@ class CentroidTrackerDebugger():
 		cv2.putText(rgb_image_with_id_data, frame_index_str, org, cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 0, 255), 2)
 
 		rects_ordered_dict = OrderedDict()
-		for index, rect in enumerate(rects):
+		for index, rect in enumerate(bounding_boxes):
 			rects_ordered_dict[index] = rect
 
 		current_frame_objects_color = (0, 255, 0)
 		video_objects_color = (255, 0, 0)
 
 
-		if len(rects) == 0:
+		if len(bounding_boxes) == 0:
 			# loop over any existing tracked objects and mark them
 			# as disappeared
 			for objectID in list(self.disappeared.keys()):
@@ -151,10 +152,10 @@ class CentroidTrackerDebugger():
 			return self.objects
 
 		# initialize an array of input centroids for the current frame
-		inputCentroids = np.zeros((len(rects), 2), dtype="int")
+		inputCentroids = np.zeros((len(bounding_boxes), 2), dtype="int")
 
 		# loop over the bounding box rectangles
-		for (i, (startX, startY, endX, endY)) in enumerate(rects):
+		for (i, (startX, startY, endX, endY)) in enumerate(bounding_boxes):
 			# use the bounding box coordinates to derive the centroid
 			cX = round((startX + endX) / 2.0)
 			cY = round((startY + endY) / 2.0)
@@ -164,9 +165,9 @@ class CentroidTrackerDebugger():
 		# centroids and register each of them
 		if len(self.objects) == 0:
 			for i in range(0, len(inputCentroids)):
-				self.register(rects[i], inputCentroids[i])
-				rgb_image_with_tracking_data = self.plot_bounding_box(rgb_image_with_tracking_data, rects[i], color=current_frame_objects_color, style='dashed', disappeard_count=-1)
-				rgb_image_with_id_data = self.plot_bounding_box_with_id(rgb_image_with_id_data, rects[i], object_id=i)
+				self.register(bounding_boxes[i], inputCentroids[i])
+				rgb_image_with_tracking_data = self.plot_bounding_box(rgb_image_with_tracking_data, bounding_boxes[i], color=current_frame_objects_color, style='dashed', disappeard_count=-1)
+				rgb_image_with_id_data = self.plot_bounding_box_with_id(rgb_image_with_id_data, bounding_boxes[i], object_id=i)
 
 		# otherwise, are currently tracking objects so we need to
 		# try to match the input centroids to existing object
@@ -220,12 +221,12 @@ class CentroidTrackerDebugger():
 				end_point = current_input_centroid
 				self.objects[objectID] = current_input_centroid
 				rect_last_position = self.objects_rects[objectID]
-				self.objects_rects[objectID] = rects[col]
+				self.objects_rects[objectID] = bounding_boxes[col]
 				self.disappeared[objectID] = 0
 
-				rgb_image_with_id_data = self.plot_bounding_box_with_id(rgb_image_with_id_data, rects[col], object_id=objectID)
+				rgb_image_with_id_data = self.plot_bounding_box_with_id(rgb_image_with_id_data, bounding_boxes[col], object_id=objectID)
 				rgb_image_with_tracking_data = self.plot_bounding_box(rgb_image_with_tracking_data, rect_last_position, color=video_objects_color, style='regular', disappeard_count=self.disappeared[objectID])
-				rgb_image_with_tracking_data = self.plot_bounding_box(rgb_image_with_tracking_data, rects[col], color=current_frame_objects_color, style='regular', disappeard_count=-1)
+				rgb_image_with_tracking_data = self.plot_bounding_box(rgb_image_with_tracking_data, bounding_boxes[col], color=current_frame_objects_color, style='regular', disappeard_count=-1)
 				line_color = (0, 0, 255)
 				line_thickness = 2
 				cv2.line(rgb_image_with_tracking_data, start_point, end_point, line_color, line_thickness)
@@ -268,7 +269,7 @@ class CentroidTrackerDebugger():
 			# register each new input centroid as a trackable object
 			#else:
 			for col in unusedCols:
-				self.register(rects[col], inputCentroids[col])
+				self.register(bounding_boxes[col], inputCentroids[col])
 
 		# return the set of trackable objects
 		return rgb_image_with_tracking_data, rgb_image_with_id_data

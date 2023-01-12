@@ -59,9 +59,6 @@ class YoloObjectDetection:
         objects_numpy_yolo_data = objects_dataframes.to_numpy()
         num_of_objects = objects_numpy_yolo_data.shape[0]
 
-
-        frame_with_ballons_data = frame.copy()
-        #rects = []
         objects_data = []
         for object_index in range(0, num_of_objects):
             single_object_yolo_data = objects_numpy_yolo_data[object_index]
@@ -75,34 +72,44 @@ class YoloObjectDetection:
             obj_name = single_object_yolo_data[6]
 
             single_object_bounding_box = np.array([x_min, y_min, x_max, y_max]).astype("int")
-            #rects.append(single_object_bounding_box)
 
             start_point = (int(x_min), int(y_min))
             end_point = (int(x_max), int(y_max))
             x_middle = int(0.5 * (x_min + x_max))
             y_middle = int(0.5 * (y_min + y_max))
+            center_point = (x_middle, y_middle)
 
             single_object_color_data = self.detect_object_color_data(frame, single_object_yolo_data)
             single_object_data = dict()
             single_object_data['bounding_box'] = single_object_bounding_box
+            single_object_data['start_point'] = start_point
+            single_object_data['end_point'] = end_point
+            single_object_data['start_point'] = start_point
+            single_object_data['center_point'] = center_point
             single_object_data['confidence'] = confidence
             single_object_data['obj_class'] = obj_class
             single_object_data['obj_name'] = obj_name
             single_object_data['color_data'] = single_object_color_data
             objects_data.append(single_object_data)
+        return objects_data
 
-
+    def create_frame_with_objects_data(self, rgb_image, objects_data):
+        rgb_image_with_objects_data = rgb_image.copy()
+        num_of_objects_in_frame = len(objects_data)
+        for object_index in range(0, num_of_objects_in_frame):
+            single_object_data = objects_data[object_index]
+            single_object_color_data = single_object_data['color_data']
             object_color_name = single_object_color_data["name"]
             object_color = single_object_color_data["rgb_color"]
+            start_point = single_object_data['start_point']
+            end_point = single_object_data['end_point']
+            center_point = single_object_data['center_point']
 
 
-            cv2.rectangle(frame_with_ballons_data, start_point, end_point, object_color, thickness=2)
+            cv2.rectangle(rgb_image_with_objects_data, start_point, end_point, object_color, thickness=2)
             font = cv2.FONT_HERSHEY_SIMPLEX
             objectFontScale = 0.8
             objectThickness = 2
-            center = (x_middle, y_middle)
-            cv2.putText(frame_with_ballons_data, f'{object_color_name}', center, font,
+            cv2.putText(rgb_image_with_objects_data, f'{object_color_name}', center_point, font,
                         objectFontScale, object_color, objectThickness, cv2.LINE_AA)
-
-
-        return objects_data
+        return rgb_image_with_objects_data

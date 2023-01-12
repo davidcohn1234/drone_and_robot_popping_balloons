@@ -33,6 +33,16 @@ if platform_os == "Windows":
         return None
 
 
+def create_empty_output_folder(images_output_folder):
+    isExist = os.path.exists(images_output_folder)
+    if not isExist:
+        os.makedirs(images_output_folder)
+    else:
+        files = glob.glob(images_output_folder + '/*.jpg')
+        for f in files:
+            os.remove(f)
+
+
 def drawline(img, pt1, pt2, color, thickness=1, style='dotted', gap=20):
     dist = ((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2) ** .5
     pts = []
@@ -69,7 +79,7 @@ def drawpoly(img, pts, color, thickness=1, style='dotted', ):
 
 
 def drawrect(img, pt1, pt2, color, thickness=1, style='dotted'):
-    if style=='regular':
+    if style == 'regular':
         cv2.rectangle(img, pt1, pt2, color, thickness)
     else:
         pts = [pt1, (pt2[0], pt1[1]), pt2, (pt1[0], pt2[1])]

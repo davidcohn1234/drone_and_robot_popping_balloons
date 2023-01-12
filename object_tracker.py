@@ -7,17 +7,6 @@ import common_utils
 import glob
 from yolo_object_detection import YoloObjectDetection
 
-
-def create_empty_output_folder(images_output_folder):
-    isExist = os.path.exists(images_output_folder)
-    if not isExist:
-        os.makedirs(images_output_folder)
-    else:
-        files = glob.glob(images_output_folder + '/*.jpg')
-        for f in files:
-            os.remove(f)
-
-
 def save_frame(rgb_image_with_id_data, images_output_folder, frame_index):
     file_full_path = "{}/{:05d}.jpg".format(images_output_folder, frame_index)
     cv2.imwrite(file_full_path, rgb_image_with_id_data)
@@ -47,14 +36,14 @@ def main():
     main_tracking_output_folder = './balloons_images_with_tracking_data'
     images_tracking_output_folder = main_tracking_output_folder + '/' + 'images'
     videos_tracking_output_folder = main_tracking_output_folder + '/' + 'videos'
-    create_empty_output_folder(images_tracking_output_folder)
-    create_empty_output_folder(videos_tracking_output_folder)
+    common_utils.create_empty_output_folder(images_tracking_output_folder)
+    common_utils.create_empty_output_folder(videos_tracking_output_folder)
 
     main_id_output_folder = './balloons_images_with_id_data'
     images_id_output_folder = main_id_output_folder + '/' + 'images'
     videos_id_output_folder = main_id_output_folder + '/' + 'videos'
-    create_empty_output_folder(images_id_output_folder)
-    create_empty_output_folder(videos_id_output_folder)
+    common_utils.create_empty_output_folder(images_id_output_folder)
+    common_utils.create_empty_output_folder(videos_id_output_folder)
 
     rgb_image = None
     for frame_index, jpg_file in enumerate(jpg_files):
