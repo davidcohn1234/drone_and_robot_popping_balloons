@@ -157,8 +157,10 @@ class TelloCV(object):
                                         self.vid_stream.width,
                                         color_lower, color_upper)
         else:
-            self.frame_height = 1080
-            self.frame_width = 1920
+            # self.frame_height = 1080
+            # self.frame_width = 1920
+            self.frame_height = 333
+            self.frame_width = 600
             self.colortracker = Tracker(self.frame_height, self.frame_width, color_lower, color_upper)
 
 
