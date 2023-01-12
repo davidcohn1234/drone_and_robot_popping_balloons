@@ -51,8 +51,8 @@ class YoloObjectDetection:
             return self.unknown_color_info
         return object_color_data
 
-    def detect_objects_in_frame(self, frame, model):
-        results = model(frame)
+    def detect_objects_in_frame(self, frame, yolo_model):
+        results = yolo_model(frame)
 
         frame_pandas_results = results.pandas()
         objects_dataframes = frame_pandas_results.xyxy[0]
