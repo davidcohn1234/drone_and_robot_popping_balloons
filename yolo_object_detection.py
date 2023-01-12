@@ -93,7 +93,8 @@ class YoloObjectDetection:
             objects_data.append(single_object_data)
         return objects_data
 
-    def create_frame_with_objects_data(self, rgb_image, objects_data):
+    @staticmethod
+    def create_frame_with_objects_data(rgb_image, objects_data):
         rgb_image_with_objects_data = rgb_image.copy()
         num_of_objects_in_frame = len(objects_data)
         for object_index in range(0, num_of_objects_in_frame):
