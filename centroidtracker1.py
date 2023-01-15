@@ -30,7 +30,8 @@ class CentroidTracker():
 		del self.objects[objectID]
 		del self.disappeared[objectID]
 
-	def update(self, rects):
+	def update(self, objects_data):
+		rects = [single_object_data['bounding_box'] for single_object_data in objects_data]
 		# check to see if the list of input bounding box rectangles
 		# is empty
 		if len(rects) == 0:
