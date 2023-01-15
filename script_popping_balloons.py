@@ -2,20 +2,24 @@ import cv2
 import torch
 import common_utils
 import glob
+from tracking_objects import Tracker
 from yolo_object_detection import YoloObjectDetection
 
+def get_first_frame_dimensions(jpg_files):
+    first_jpg_file = jpg_files[0]
+    first_rgb_image = cv2.imread(first_jpg_file)
+    (height, width, channels) = first_rgb_image.shape
+    return (height, width, channels)
+
 def main():
-    folder_name = '03_balloons_video_ninja_room'
-    #folder_name = '01_david_house'
+    folder_name = '01_david_house'
     input_folder_full_path = f'./input_data/images/' + folder_name
     jpg_files = sorted(glob.glob(input_folder_full_path + '/*.jpg'))
+    (image_height, image_width, image_channels) = get_first_frame_dimensions(jpg_files)
 
-    # input_file_name = 'balloons_video_ninja_room.mp4'
-    # input_file_full_path = f'./input_data/videos/{input_file_name}'
-    # vid = cv2.VideoCapture(input_file_full_path)
-    # vid.set(cv2.CAP_PROP_BUFFERSIZE, 2)
-
-    model = torch.hub.load('ultralytics/yolov5', 'custom', path='./balloons_weights.pt')
+    #model = torch.hub.load('ultralytics/yolov5', 'custom', path='./balloons_weights.pt')
+    model = torch.hub.load('./yolov5', 'custom', './balloons_weights.pt', source='local')
+    #model = torch.hub.load('yolov5s-cls.pt', 'custom', path='./balloons_kaggle.pt', source='local')
     model.conf = 0.8
 
     main_output_folder = './balloons_images_with_color_name'
@@ -24,7 +28,8 @@ def main():
     common_utils.create_empty_output_folder(images_output_folder)
     common_utils.create_empty_output_folder(videos_output_folder)
 
-    yolo_balloon_detection = YoloObjectDetection()
+
+    object_tracker = Tracker(model, images_output_folder, image_height, image_width)
 
 
     for frame_index, jpg_file in enumerate(jpg_files):
@@ -32,21 +37,10 @@ def main():
         if rgb_image is None:
             break
         print(f'frame_index = {frame_index}')
-        objects_data = yolo_balloon_detection.detect_objects_in_frame(rgb_image, model)
-        rgb_image_with_ballons_data = yolo_balloon_detection.create_frame_with_objects_data(rgb_image, objects_data)
 
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        fontScale = 1
-        color = (255, 0, 255)
-        thickness = 2
-        org = (20, 50)
-        cv2.putText(rgb_image_with_ballons_data, f'{frame_index}', org, font, fontScale, color, thickness, cv2.LINE_AA)
-
-        file_full_path = "{}/{:05d}.jpg".format(images_output_folder, frame_index)
-        cv2.imwrite(file_full_path, rgb_image_with_ballons_data)
+        rgb_image_with_ballons_data = object_tracker.track(rgb_image, frame_index)
 
         cv2.imshow('rgb_image_with_ballons_data', rgb_image_with_ballons_data)
-        #print(results.pandas().xyxy[0])
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
             break

@@ -51,8 +51,10 @@ class YoloObjectDetection:
             return self.unknown_color_info
         return object_color_data
 
-    def detect_objects_in_frame(self, frame, yolo_model):
-        results = yolo_model(frame)
+    def detect_objects_in_frame(self, rgb_image, yolo_model):
+        results = yolo_model(rgb_image)
+        (image_height, image_width, _) = rgb_image.shape
+        image_center_point = np.array((int(0.5 * image_width), int(0.5 * image_height)))
 
         frame_pandas_results = results.pandas()
         objects_dataframes = frame_pandas_results.xyxy[0]
@@ -67,6 +69,9 @@ class YoloObjectDetection:
             y_min = single_object_yolo_data[1]
             x_max = single_object_yolo_data[2]
             y_max = single_object_yolo_data[3]
+            object_width = x_max - x_min
+            object_height = y_max - y_min
+            object_radius = min(object_width, object_height)
             confidence = single_object_yolo_data[4]
             obj_class = single_object_yolo_data[5]
             obj_name = single_object_yolo_data[6]
@@ -77,24 +82,29 @@ class YoloObjectDetection:
             end_point = (int(x_max), int(y_max))
             x_middle = int(0.5 * (x_min + x_max))
             y_middle = int(0.5 * (y_min + y_max))
-            center_point = (x_middle, y_middle)
+            object_center_point = np.array((x_middle, y_middle))
+            offset_from_image_center_to_object_center = image_center_point - object_center_point
 
-            single_object_color_data = self.detect_object_color_data(frame, single_object_yolo_data)
+            single_object_color_data = self.detect_object_color_data(rgb_image, single_object_yolo_data)
             single_object_data = dict()
             single_object_data['bounding_box'] = single_object_bounding_box
             single_object_data['start_point'] = start_point
             single_object_data['end_point'] = end_point
             single_object_data['start_point'] = start_point
-            single_object_data['center_point'] = center_point
+            single_object_data['center_point'] = object_center_point
+            single_object_data['offset_from_image_center_to_object_center'] = offset_from_image_center_to_object_center
             single_object_data['confidence'] = confidence
             single_object_data['obj_class'] = obj_class
             single_object_data['obj_name'] = obj_name
             single_object_data['color_data'] = single_object_color_data
+            single_object_data['width'] = object_width
+            single_object_data['height'] = object_height
+            single_object_data['radius'] = object_radius
             objects_data.append(single_object_data)
         return objects_data
 
     @staticmethod
-    def create_frame_with_objects_data(rgb_image, objects_data):
+    def create_frame_with_objects_data(rgb_image, objects_data, frame_index):
         rgb_image_with_objects_data = rgb_image.copy()
         num_of_objects_in_frame = len(objects_data)
         for object_index in range(0, num_of_objects_in_frame):
@@ -113,4 +123,12 @@ class YoloObjectDetection:
             objectThickness = 2
             cv2.putText(rgb_image_with_objects_data, f'{object_color_name}', center_point, font,
                         objectFontScale, object_color, objectThickness, cv2.LINE_AA)
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            fontScale = 1
+            color = (255, 0, 255)
+            thickness = 2
+            org = (20, 50)
+            cv2.putText(rgb_image_with_objects_data, f'{frame_index}', org, font, fontScale, color, thickness,
+                        cv2.LINE_AA)
         return rgb_image_with_objects_data
