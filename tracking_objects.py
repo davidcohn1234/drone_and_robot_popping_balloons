@@ -67,6 +67,7 @@ class Tracker:
             rgb_image_with_balloons_data = self.yolo_balloon_detection.create_frame_with_objects_data(rgb_image,
                                                                                                       objects_data,
                                                                                                       frame_index)
+            rgb_image_with_balloons_data = self.plot_objects_data(objects_data, rgb_image_with_balloons_data)
 
             data = dict()
             data['objects'] = objects_ordered_dict
@@ -121,10 +122,16 @@ class Tracker:
     def plot_objects_data(self, objects_data, rgb_image):
         rgb_image_with_data = rgb_image.copy()
         circle_radius = 8
+        line_thickness = 3
+        image_center_point_x = self.image_center_point[0]
+        image_center_point_y = self.image_center_point[1]
         for (object_index, single_object_data) in enumerate(objects_data):
             object_center_point = single_object_data['center_point']
-            #cv2.line(img=rgb_image_with_data, pt1=self.image_center_point, pt2=object_center_point, color=(255, 0, 0), thickness=5)
-            cv2.arrowedLine(img=rgb_image_with_data, pt1=self.image_center_point, pt2=object_center_point, color=(255, 0, 0), thickness=5)
+            object_center_point_x = object_center_point[0]
+            object_center_point_y = object_center_point[1]
+            cv2.line(img=rgb_image_with_data, pt1=self.image_center_point, pt2=object_center_point, color=(255, 255, 0), thickness=line_thickness)
+            cv2.arrowedLine(img=rgb_image_with_data, pt1=(image_center_point_x, image_center_point_y), pt2=(image_center_point_x, object_center_point_y), color=(255, 0, 0), thickness=line_thickness)
+            cv2.arrowedLine(img=rgb_image_with_data, pt1=(image_center_point_x, object_center_point_y), pt2=(object_center_point_x, object_center_point_y), color=(255, 0, 0), thickness=line_thickness)
             cv2.circle(img=rgb_image_with_data, center=self.image_center_point, radius=circle_radius, color=(0, 255, 0), thickness=-1)
             cv2.circle(img=rgb_image_with_data, center=object_center_point, radius=circle_radius, color=(0, 255, 255),
                        thickness=-1)
@@ -146,6 +153,10 @@ class Tracker:
         rgb_image = data['frame']
         frame_index = data['frame_index']
         rgb_image_with_balloons_data = data['rgb_image_with_balloons_data']
+
+        self.calculate_robot_data(objects_data=objects_ordered_dict)
+        if self.work_with_real_robot:
+            self.robot.drive_speed(self.robot_forward_speed, self.robot_right_speed, self.robot_yaw_speed)
 
         file_full_path = "{}/{:05d}.jpg".format(self.images_output_folder, frame_index)
         cv2.imwrite(file_full_path, rgb_image_with_balloons_data)
