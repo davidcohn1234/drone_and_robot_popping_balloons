@@ -54,7 +54,8 @@ unknown_color_info = {"name": 'unknown', "lower": (0, 0, 0), "upper": (0, 0, 0),
 # vid = cv2.VideoCapture(input_file_full_path)
 #vid = cv2.VideoCapture(0)
 # vid.set(cv2.CAP_PROP_BUFFERSIZE, 2)
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='./balloons_weights.pt')
+#model = torch.hub.load('ultralytics/yolov5', 'custom', path='./balloons_weights.pt')
+model = torch.hub.load('./yolov5', 'custom', './balloons_weights.pt', source='local')
 # model = torch.hub.load('/home/lab_user/Ninja-2022_new/yolov5', 'custom', path='/home/lab_user/Ninja-2022_new/challenge_2_balloons/balloons_kaggle.pt', source='local')
 #model = torch.hub.load('./', 'custom', path='./balloons_kaggle.pt', source='local')
 model.conf = 0.6

@@ -29,7 +29,8 @@ def main():
     # jpg_files = [image_full_path]
     frame_milliseconds = 1
 
-    model = torch.hub.load('ultralytics/yolov5', 'custom', path='./balloons_weights.pt')
+    #model = torch.hub.load('ultralytics/yolov5', 'custom', path='./balloons_weights.pt')
+    model = torch.hub.load('./yolov5', 'custom', './balloons_weights.pt', source='local')
     model.conf = 0.8
 
 
@@ -52,6 +53,7 @@ def main():
         if rgb_image is None:
             break
         objects_data = yolo_balloon_detection.detect_objects_in_frame(rgb_image, model)
+        objects_ordered_dict = ct.update(objects_data)
         rgb_image_with_tracking_data, rgb_image_with_id_data = ct_debugger.get_image_with_matching_objects(objects_data, rgb_image, prev_rgb_image, frame_index)
         save_frame(rgb_image_with_id_data, images_id_output_folder, frame_index)
         cv2.imshow("rgb_image_with_id_data", rgb_image_with_id_data)

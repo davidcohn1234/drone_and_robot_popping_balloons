@@ -93,6 +93,7 @@ class YoloObjectDetection:
             single_object_data['start_point'] = start_point
             single_object_data['center_point'] = object_center_point
             single_object_data['offset_from_image_center_to_object_center'] = offset_from_image_center_to_object_center
+            single_object_data['dist_from_image_center_to_object_center'] = np.linalg.norm(offset_from_image_center_to_object_center)
             single_object_data['confidence'] = confidence
             single_object_data['obj_class'] = obj_class
             single_object_data['obj_name'] = obj_name

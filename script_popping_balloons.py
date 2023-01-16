@@ -32,18 +32,10 @@ def main():
     object_tracker = Tracker(model, images_output_folder, image_height, image_width)
 
 
-    for frame_index, jpg_file in enumerate(jpg_files):
-        rgb_image = cv2.imread(jpg_file)
-        if rgb_image is None:
-            break
-        print(f'frame_index = {frame_index}')
+    while True:
+        object_tracker.track()
 
-        rgb_image_with_ballons_data = object_tracker.track(rgb_image, frame_index)
 
-        cv2.imshow('rgb_image_with_ballons_data', rgb_image_with_ballons_data)
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            break
 
     cv2.destroyAllWindows()
 
