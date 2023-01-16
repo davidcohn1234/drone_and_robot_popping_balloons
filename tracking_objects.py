@@ -111,13 +111,14 @@ class Tracker:
         return
 
     def calculate_robot_data(self, objects_data):
-        for (object_index, single_object_data) in enumerate(objects_data):
-            offset_from_image_center_to_object_center = single_object_data['offset_from_image_center_to_object_center']
-            self.vx = offset_from_image_center_to_object_center[0]
-            self.vy = offset_from_image_center_to_object_center[1]
-            object_radius = single_object_data['radius']
-            self.calculate_robot_forward_speed(object_radius)
-            self.calculate_robot_right_speed(object_radius)
+        object_to_follow_index = 0
+        object_to_follow = objects_data[object_to_follow_index]
+        offset_from_image_center_to_object_center = object_to_follow['offset_from_image_center_to_object_center']
+        self.vx = offset_from_image_center_to_object_center[0]
+        self.vy = offset_from_image_center_to_object_center[1]
+        object_radius = object_to_follow['radius']
+        self.calculate_robot_forward_speed(object_radius)
+        self.calculate_robot_right_speed(object_radius)
 
     def plot_objects_data(self, objects_data, rgb_image):
         rgb_image_with_data = rgb_image.copy()
@@ -137,6 +138,9 @@ class Tracker:
                        thickness=-1)
         return rgb_image_with_data
 
+    def add_robot_data_to_frame(self, rgb_image):
+        pass
+
     def track(self):
         # objects_data = self.yolo_balloon_detection.detect_objects_in_frame(rgb_image, self.model)
         # objects_ordered_dict = self.ct.update(objects_data)
@@ -155,6 +159,7 @@ class Tracker:
         rgb_image_with_balloons_data = data['rgb_image_with_balloons_data']
 
         self.calculate_robot_data(objects_data=objects_ordered_dict)
+        self.add_robot_data_to_frame(rgb_image_with_balloons_data)
         if self.work_with_real_robot:
             self.robot.drive_speed(self.robot_forward_speed, self.robot_right_speed, self.robot_yaw_speed)
 
