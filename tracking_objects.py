@@ -136,10 +136,37 @@ class Tracker:
             cv2.circle(img=rgb_image_with_data, center=self.image_center_point, radius=circle_radius, color=(0, 255, 0), thickness=-1)
             cv2.circle(img=rgb_image_with_data, center=object_center_point, radius=circle_radius, color=(0, 255, 255),
                        thickness=-1)
+
+            radius_str = "radius={:.1f}".format(single_object_data['radius'])
+            text_scale = 0.8
+            text_color = (255, 255, 0)
+            thickness = 2
+            cv2.putText(rgb_image_with_data, radius_str, (object_center_point_x, 50 + object_center_point_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color,
+                        thickness)
         return rgb_image_with_data
 
     def add_robot_data_to_frame(self, rgb_image):
-        pass
+        text_color = (0, 255, 255)
+        thickness = 2
+        text_x = 30
+        text_delta = 50
+        text_scale = 1.0
+
+        text_y = 100
+        forward_speed_str = "robot_forward_speed={}".format(self.robot_forward_speed)
+        cv2.putText(rgb_image, forward_speed_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color, thickness)
+
+        text_y += text_delta
+        right_speed_str = "robot_right_speed={}".format(self.robot_right_speed)
+        cv2.putText(rgb_image, right_speed_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color, thickness)
+
+        text_y += text_delta
+        vx_str = "vx={}".format(self.vx)
+        cv2.putText(rgb_image, vx_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color, thickness)
+
+        text_y += text_delta
+        vy_str = "vy={}".format(self.vy)
+        cv2.putText(rgb_image, vy_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color, thickness)
 
     def track(self):
         # objects_data = self.yolo_balloon_detection.detect_objects_in_frame(rgb_image, self.model)
