@@ -161,6 +161,10 @@ class Tracker:
         cv2.putText(rgb_image, right_speed_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color, thickness)
 
         text_y += text_delta
+        yaw_speed_str = "robot_yaw_speed={}".format(self.robot_yaw_speed)
+        cv2.putText(rgb_image, yaw_speed_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color, thickness)
+
+        text_y += text_delta
         vx_str = "vx={}".format(self.vx)
         cv2.putText(rgb_image, vx_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color, thickness)
 

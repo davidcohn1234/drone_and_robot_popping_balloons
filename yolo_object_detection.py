@@ -83,7 +83,7 @@ class YoloObjectDetection:
             x_middle = int(0.5 * (x_min + x_max))
             y_middle = int(0.5 * (y_min + y_max))
             object_center_point = np.array((x_middle, y_middle))
-            offset_from_image_center_to_object_center = image_center_point - object_center_point
+            offset_from_image_center_to_object_center = object_center_point - image_center_point
 
             single_object_color_data = self.detect_object_color_data(rgb_image, single_object_yolo_data)
             single_object_data = dict()
