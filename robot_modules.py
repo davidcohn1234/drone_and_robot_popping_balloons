@@ -1,6 +1,5 @@
 from robomaster import robot
 #from robomaster import camera
-import time
 
 
 class RobotModules:
@@ -17,6 +16,5 @@ class RobotModules:
     def drive_speed(self, forward_backward, left_right, yaw_speed):
         if forward_backward is None or left_right is None or yaw_speed is None:
             return
-        print(f'self.ninja1.chassis.drive_speed({forward_backward}, {left_right}, {yaw_speed}, timeout=5)')
-        self.ninja1.chassis.drive_speed(forward_backward, left_right, yaw_speed, timeout=5)
-        time.sleep(1)
+        print(f'self.ninja1.chassis.drive_speed({forward_backward}, {left_right}, {yaw_speed})')
+        self.ninja1.chassis.drive_speed(forward_backward, left_right, yaw_speed)

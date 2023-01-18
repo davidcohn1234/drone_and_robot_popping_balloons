@@ -7,6 +7,7 @@ import queue
 import threading
 import glob
 import common_utils
+import time
 
 
 class Tracker:
@@ -214,7 +215,9 @@ class Tracker:
         self.calculate_robot_data(objects_data=objects_ordered_dict)
         self.add_robot_data_to_frame(rgb_image_with_balloons_data)
         if self.work_with_real_robot:
-            self.robot.drive_speed(self.robot_forward_speed, self.robot_right_speed, self.robot_yaw_speed)
+            # self.robot.drive_speed(self.robot_forward_speed, self.robot_right_speed, self.robot_yaw_speed)
+            self.robot.drive_speed(1, 0, 0)
+            time.sleep(1)
 
         file_full_path = "{}/{:05d}.jpg".format(self.images_output_folder, frame_index)
         cv2.imwrite(file_full_path, rgb_image_with_balloons_data)
