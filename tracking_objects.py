@@ -1,32 +1,37 @@
 from yolo_object_detection import YoloObjectDetection
 import numpy as np
 import cv2
-from robot_modules import Robot
+from robot_modules import RobotModules
 from centroidtracker1 import CentroidTracker
 import queue
 import threading
 import glob
 import common_utils
 
+
 class Tracker:
-    def __init__(self, model, images_output_folder, image_height, image_width):
+    def __init__(self, model, images_output_folder):
         self.model = model
         self.yolo_balloon_detection = YoloObjectDetection()
         self.images_output_folder = images_output_folder
-        self.image_height = image_height
-        self.image_width = image_width
-        self.image_center_point = np.array((int(0.5 * image_width), int(0.5 * image_height)))
-        self.work_with_real_robot = False
+        self.work_with_real_robot = True
         if self.work_with_real_robot:
-            self.robot = Robot()
-            self.robo_camera = self.robot.camera
+            self.robot = RobotModules()
+            self.robo_camera = self.robot.ninja1.camera
+            self.image_height = 360  # TODO - change
+            self.image_width = 640  # TODO - change
         else:
+            folder_name = '01_david_house'
+            input_folder_full_path = f'./input_data/images/' + folder_name
+            jpg_files = sorted(glob.glob(input_folder_full_path + '/*.jpg'))
+            (self.image_height, self.image_width, image_channels) = self.get_first_frame_dimensions(jpg_files)
             self.simulated_frame_index = -1
-            self.images_folder = './input_data/images/01_david_house'
-            #self.images_folder = './input_data/images/03_balloons_video_ninja_room'
+            self.images_folder = './input_data/images/' + folder_name
+            # self.images_folder = './input_data/images/03_balloons_video_ninja_room'
             jpg_expression = self.images_folder + '/*.jpg'
             self.list_of_images = sorted(glob.glob(jpg_expression))
             self.num_of_images = len(self.list_of_images)
+        self.image_center_point = np.array((int(0.5 * self.image_width), int(0.5 * self.image_height)))
         self.radius_to_follow = 150
         self.radius_to_get_away = 250
         self.forward_speed = 0.3
@@ -41,6 +46,12 @@ class Tracker:
         common_utils.create_empty_output_folder(self.images_output_folder)
         self.ct = CentroidTracker()
         self.init_robo_cam()
+
+    def get_first_frame_dimensions(self, jpg_files):
+        first_jpg_file = jpg_files[0]
+        first_rgb_image = cv2.imread(first_jpg_file)
+        (height, width, channels) = first_rgb_image.shape
+        return height, width, channels
 
     def init_robo_cam(self):
         self.q = queue.Queue()
@@ -87,7 +98,6 @@ class Tracker:
         data = self.q.get()
         return data
 
-
     def save_image(self, rgb_image, frame_index):
         file_full_path = "{}/{:05d}.jpg".format(self.images_output_folder, frame_index)
         cv2.imwrite(file_full_path, rgb_image)
@@ -97,7 +107,7 @@ class Tracker:
             self.robot_forward_speed = self.forward_speed
         elif self.radius_to_follow <= object_radius <= self.radius_to_get_away:
             self.robot_forward_speed = self.attack_speed
-        else: #if object_radius > self.radius_to_get_away
+        else:  # if object_radius > self.radius_to_get_away
             self.robot_forward_speed = -self.attack_speed
         return
 
@@ -111,7 +121,9 @@ class Tracker:
         return
 
     def calculate_robot_data(self, objects_data):
-        object_to_follow_index = 0
+        if len(objects_data) == 0:
+            return
+        object_to_follow_index = 0  # TODO - change it
         object_to_follow = objects_data[object_to_follow_index]
         offset_from_image_center_to_object_center = object_to_follow['offset_from_image_center_to_object_center']
         self.vx = offset_from_image_center_to_object_center[0]
@@ -130,10 +142,16 @@ class Tracker:
             object_center_point = single_object_data['center_point']
             object_center_point_x = object_center_point[0]
             object_center_point_y = object_center_point[1]
-            cv2.line(img=rgb_image_with_data, pt1=self.image_center_point, pt2=object_center_point, color=(255, 255, 0), thickness=line_thickness)
-            cv2.arrowedLine(img=rgb_image_with_data, pt1=(image_center_point_x, image_center_point_y), pt2=(image_center_point_x, object_center_point_y), color=(255, 0, 0), thickness=line_thickness)
-            cv2.arrowedLine(img=rgb_image_with_data, pt1=(image_center_point_x, object_center_point_y), pt2=(object_center_point_x, object_center_point_y), color=(255, 0, 0), thickness=line_thickness)
-            cv2.circle(img=rgb_image_with_data, center=self.image_center_point, radius=circle_radius, color=(0, 255, 0), thickness=-1)
+            cv2.line(img=rgb_image_with_data, pt1=self.image_center_point, pt2=object_center_point, color=(255, 255, 0),
+                     thickness=line_thickness)
+            cv2.arrowedLine(img=rgb_image_with_data, pt1=(image_center_point_x, image_center_point_y),
+                            pt2=(image_center_point_x, object_center_point_y), color=(255, 0, 0),
+                            thickness=line_thickness)
+            cv2.arrowedLine(img=rgb_image_with_data, pt1=(image_center_point_x, object_center_point_y),
+                            pt2=(object_center_point_x, object_center_point_y), color=(255, 0, 0),
+                            thickness=line_thickness)
+            cv2.circle(img=rgb_image_with_data, center=self.image_center_point, radius=circle_radius, color=(0, 255, 0),
+                       thickness=-1)
             cv2.circle(img=rgb_image_with_data, center=object_center_point, radius=circle_radius, color=(0, 255, 255),
                        thickness=-1)
 
@@ -141,7 +159,8 @@ class Tracker:
             text_scale = 0.8
             text_color = (255, 255, 0)
             thickness = 2
-            cv2.putText(rgb_image_with_data, radius_str, (object_center_point_x, 50 + object_center_point_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color,
+            cv2.putText(rgb_image_with_data, radius_str, (object_center_point_x, 50 + object_center_point_y),
+                        cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color,
                         thickness)
         return rgb_image_with_data
 
@@ -154,15 +173,18 @@ class Tracker:
 
         text_y = 100
         forward_speed_str = "robot_forward_speed={}".format(self.robot_forward_speed)
-        cv2.putText(rgb_image, forward_speed_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color, thickness)
+        cv2.putText(rgb_image, forward_speed_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color,
+                    thickness)
 
         text_y += text_delta
         right_speed_str = "robot_right_speed={}".format(self.robot_right_speed)
-        cv2.putText(rgb_image, right_speed_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color, thickness)
+        cv2.putText(rgb_image, right_speed_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color,
+                    thickness)
 
         text_y += text_delta
         yaw_speed_str = "robot_yaw_speed={}".format(self.robot_yaw_speed)
-        cv2.putText(rgb_image, yaw_speed_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color, thickness)
+        cv2.putText(rgb_image, yaw_speed_str, (text_x, text_y), cv2.FONT_HERSHEY_COMPLEX, text_scale, text_color,
+                    thickness)
 
         text_y += text_delta
         vx_str = "vx={}".format(self.vx)
@@ -202,5 +224,3 @@ class Tracker:
         #     break
 
         return
-
-

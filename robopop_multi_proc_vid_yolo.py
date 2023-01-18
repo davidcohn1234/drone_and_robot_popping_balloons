@@ -82,8 +82,8 @@ yellowCode = cv2.COLOR_BGR2HSV
 
 class Robo_baloon(object):
     def __init__(self):
-        self.use_real_robot = False
-        self.move_robot = False
+        self.use_real_robot = True
+        self.move_robot = True
         self.yaw_speed = 0
         self.forward_backward = 0
         self.left_right = 0
