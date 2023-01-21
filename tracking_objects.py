@@ -19,8 +19,10 @@ class Tracker:
         if self.work_with_real_robot:
             self.robot = RobotModules()
             self.robo_camera = self.robot.ninja1.camera
-            self.image_height = 360  # TODO - change
-            self.image_width = 640  # TODO - change
+            # self.image_height = 360  # TODO - change
+            # self.image_width = 640  # TODO - change
+            self.image_height = 720  # TODO - change
+            self.image_width = 1280  # TODO - change
         else:
             folder_name = '01_david_house'
             input_folder_full_path = f'./input_data/images/' + folder_name
@@ -112,26 +114,29 @@ class Tracker:
             self.robot_forward_speed = -self.attack_speed
         return
 
-    def calculate_robot_right_speed(self, object_radius):
-        if self.vx < 0:
-            self.robot_right_speed = int(abs(self.vx))  # move right
-            self.robot_yaw_speed = 0  # rotate right
-        else:
-            self.robot_right_speed = 0  # move right
-            self.robot_yaw_speed = int(abs(self.vx))  # rotate right
+    def calculate_robot_yaw_speed(self, object_radius):
+        self.robot_yaw_speed = int(self.vx)  # rotate right
+        # if self.vx < 0:
+        #     self.robot_right_speed = int(abs(self.vx))  # move right
+        #     self.robot_yaw_speed = 0  # rotate right
+        # else:
+        #     self.robot_right_speed = 0  # move right
+        #     self.robot_yaw_speed = int(abs(self.vx))  # rotate right
         return
 
     def calculate_robot_data(self, objects_data):
         if len(objects_data) == 0:
+            self.robot_yaw_speed = 1
             return
         object_to_follow_index = 0  # TODO - change it
-        object_to_follow = objects_data[object_to_follow_index]
+        objects_data_list = list(objects_data.values())  # TODO - fix it
+        object_to_follow = objects_data_list[object_to_follow_index]
         offset_from_image_center_to_object_center = object_to_follow['offset_from_image_center_to_object_center']
-        self.vx = offset_from_image_center_to_object_center[0]
-        self.vy = offset_from_image_center_to_object_center[1]
+        self.vx = 0.1 * offset_from_image_center_to_object_center[0]
+        self.vy = 0.1 * offset_from_image_center_to_object_center[1]
         object_radius = object_to_follow['radius']
         self.calculate_robot_forward_speed(object_radius)
-        self.calculate_robot_right_speed(object_radius)
+        self.calculate_robot_yaw_speed(object_radius)
 
     def plot_objects_data(self, objects_data, rgb_image):
         rgb_image_with_data = rgb_image.copy()
@@ -215,9 +220,16 @@ class Tracker:
         self.calculate_robot_data(objects_data=objects_ordered_dict)
         self.add_robot_data_to_frame(rgb_image_with_balloons_data)
         if self.work_with_real_robot:
-            # self.robot.drive_speed(self.robot_forward_speed, self.robot_right_speed, self.robot_yaw_speed)
-            self.robot.drive_speed(1, 0, 0)
-            time.sleep(1)
+            #self.robot.drive_speed(self.robot_forward_speed, self.robot_right_speed, self.robot_yaw_speed)
+            if self.robot_yaw_speed is not None:
+                if abs(self.robot_yaw_speed) > 2:
+                    self.robot.drive_speed(forward_backward=0, left_right=0, yaw_speed=self.robot_yaw_speed, timeout=5)
+                    time.sleep(1)
+                else:
+                    self.robot.drive_speed(forward_backward=1, left_right=0, yaw_speed=0, timeout=5)
+                    time.sleep(1)
+            #self.robot.drive_speed(1, 0, 0)
+
 
         file_full_path = "{}/{:05d}.jpg".format(self.images_output_folder, frame_index)
         cv2.imwrite(file_full_path, rgb_image_with_balloons_data)
