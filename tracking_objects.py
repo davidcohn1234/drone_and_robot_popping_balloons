@@ -15,7 +15,7 @@ class Tracker:
         self.model = model
         self.yolo_balloon_detection = YoloObjectDetection()
         self.images_output_folder = images_output_folder
-        self.work_with_real_robot = True
+        self.work_with_real_robot = False
         if self.work_with_real_robot:
             self.robot = RobotModules()
             self.robo_camera = self.robot.ninja1.camera
